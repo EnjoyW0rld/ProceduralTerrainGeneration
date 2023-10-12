@@ -265,22 +265,18 @@ public class MarchingCubes : MonoBehaviour
   new int[]{0, 3, 8},
   new int[]{}
 };
-    private List<Vector3> vertices;
-    private List<int> tries;
 
-
+    private int[,,] p;
 
     private void Start()
     {
-        tries = new List<int>();
-        vertices = new List<Vector3>();
         MeshFilter rend = GetComponent<MeshFilter>();
         Mesh mesh = new Mesh();
 
         float f = System.DateTime.Now.Second / 4.3f;
         int val = 10;
         int[,,] test = new int[10, 10, 10];
-
+        
         for (int x = 0; x < val; x++)
         {
             float realX = x / (float)val;
@@ -308,38 +304,13 @@ public class MarchingCubes : MonoBehaviour
             {{0,0,1,0 },{0,0,1,0 },{0,0,0,0 },{0,0,1,0 } },
             {{0,0,0,0 },{0,1,0,0 },{0,0,1,0 },{0,0,0,0 } }
         };
-        /*MarchTri(test);
-        
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = tries.ToArray();
-        mesh.RecalculateBounds();
-        mesh.RecalculateNormals();*/
+        p = test;
         mesh = GetMeshMarchingCubes(test);
         rend.mesh = mesh;
     }
 
-    /// <summary>
-    /// Add vertices to the array based on the case index
-    /// </summary>
-    /// <param name="ind">Case index</param>
-    private void AddVertices(int ind, Vector3 offset)
-    {
-        for (int i = 0; i < index[ind].Length; i++)
-        {
-            vertices.Add(GetPos(index[ind][i], offset));
-        }
-    }
-    private void AddTries(int ind)
-    {
-        int triCount = index[ind].Length / 3;
-        for (int i = 0; i < triCount; i++)
-        {
-            int startInd = tries.Count;
-            tries.Add(startInd + 2);
-            tries.Add(startInd + 1);
-            tries.Add(startInd);
-        }
-    }
+    //STATIC FUNCTIONS
+
     private static Vector3 GetPos(int num, Vector3 offset)
     {
         Vector3 pos = Vector3.zero;
@@ -360,33 +331,6 @@ public class MarchingCubes : MonoBehaviour
         pos += offset;
         return pos;
     }
-
-    private void MarchTri(int[,,] arr)
-    {
-        for (int x = 0; x < arr.GetLength(0); x++)
-        {
-            int nextX = x + 1 == arr.GetLength(0) ? 0 : x + 1;
-            for (int y = 0; y < arr.GetLength(1); y++)
-            {
-                int nextY = y + 1 == arr.GetLength(1) ? 0 : y + 1;
-                for (int z = 0; z < arr.GetLength(2); z++)
-                {
-                    int nextZ = z + 1 == arr.GetLength(2) ? 0 : z + 1;
-
-                    int[] corn = new int[] { arr[x, y, nextZ], arr[nextX, y, nextZ], arr[nextX, y, z], arr[x, y, z],
-                        arr[x, nextY, nextZ], arr[nextX, nextY, nextZ], arr[nextX, nextY, z], arr[x, nextY, z] };
-
-                    int currCase = GetCase(corn);
-                    AddVertices(currCase, new Vector3(x, y, z));
-                    AddTries(currCase);
-                }
-            }
-        }
-    }
-
-
-    //STATIC FUNCTIONS
-
     /// <summary>
     /// Get case number based on a non empty vertices
     /// </summary>
@@ -405,19 +349,23 @@ public class MarchingCubes : MonoBehaviour
         if (corners[7] == 0) res |= 128;
         return res;
     }
-    private static Mesh GetMeshMarchingCubes(int[,,] values)
+    private static void MarchAlgorithm(int[,,] values)
+    {
+        
+    }
+    public static Mesh GetMeshMarchingCubes(int[,,] values)
     {
         List<Vector3> vertices = new List<Vector3>();
         List<int> faces = new List<int>();
 
         Mesh mesh = new Mesh();
-        for (int x = 0; x < values.GetLength(0); x++)
+        for (int x = 0; x < values.GetLength(0) - 1; x++)
         {
             int nextX = x + 1 == values.GetLength(0) ? 0 : x + 1;
-            for (int y = 0; y < values.GetLength(1); y++)
+            for (int y = 0; y < values.GetLength(1) - 1; y++)
             {
                 int nextY = y + 1 == values.GetLength(1) ? 0 : y + 1;
-                for (int z = 0; z < values.GetLength(2); z++)
+                for (int z = 0; z < values.GetLength(2) - 1; z++)
                 {
                     int nextZ = z + 1 == values.GetLength(2) ? 0 : z + 1;
 
@@ -425,6 +373,7 @@ public class MarchingCubes : MonoBehaviour
                         values[x, nextY, nextZ], values[nextX, nextY, nextZ], values[nextX, nextY, z], values[x, nextY, z] };
 
                     int currCase = GetCase(corn);
+                    if (currCase != 0 || currCase != index.Count - 1) print(currCase);
                     AddVertices(currCase, new Vector3(x, y, z),vertices);
                     AddTries(currCase,faces);
 
@@ -434,7 +383,12 @@ public class MarchingCubes : MonoBehaviour
         mesh.vertices = vertices.ToArray();
         mesh.triangles = faces.ToArray();
         mesh.RecalculateNormals();
+        mesh.RecalculateTangents();
         return mesh;
+    }
+    public static MeshData GetDataMarchingCubes(int[,,] values)
+    {
+        return null;
     }
     private static void AddTries(int ind, List<int> tries)
     {
@@ -442,9 +396,9 @@ public class MarchingCubes : MonoBehaviour
         for (int i = 0; i < triCount; i++)
         {
             int startInd = tries.Count;
-            tries.Add(startInd + 2);
-            tries.Add(startInd + 1);
             tries.Add(startInd);
+            tries.Add(startInd + 1);
+            tries.Add(startInd + 2);
         }
     }
     private static void AddVertices(int ind, Vector3 offset, List<Vector3> vec)
@@ -457,16 +411,29 @@ public class MarchingCubes : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        for (int x = 0; x < 4; x++)
+        if (p == null) return;
+        for (int x = 0; x < p.GetLength(0); x++)
         {
-            for (int y = 0; y < 4; y++)
+            for (int y = 0; y < p.GetLength(1); y++)
             {
-                for (int z = 0; z < 4; z++)
+                for (int z = 0; z < p.GetLength(2); z++)
                 {
-                    Gizmos.DrawWireCube(new Vector3(x + .5f, y + .5f, z + .5f), new Vector3(1, 1, 1));
+                    UnityEditor.Handles.Label(new Vector3(x, y, z), p[x, y, z] + "");
                 }
             }
         }
-        //Gizmos.DrawWireCube(new Vector3(.5f, .5f, .5f), new Vector3(1, 1, 1));
+    }
+
+}
+
+public class MeshData
+{
+    public List<Vector3> vertices;
+    public List<int> faces;
+
+    public MeshData(List<Vector3> vertices, List<int> faces)
+    {
+        this.vertices = vertices;
+        this.faces = faces;
     }
 }
