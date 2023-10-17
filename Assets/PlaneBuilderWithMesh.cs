@@ -10,11 +10,23 @@ public class PlaneBuilderWithMesh : MonoBehaviour
     [SerializeField] private int[,,] p;
     [SerializeField] private float threshold = .5f;
 
+    [Header("Ground and caves")]
+    [SerializeField] private int maxDepth = 20;
+    [SerializeField] private int maxElevation = 10;
+
 
     private void Start()
     {
         MeshFilter rend = GetComponent<MeshFilter>();
+        MeshData data = GenerateGround();
+        Mesh mesh = new Mesh();
+        mesh.vertices = data.vertices.ToArray();
+        mesh.triangles = data.faces.ToArray();
+        mesh.RecalculateNormals();
 
+        rend.mesh = mesh;
+
+        return;
         int[,,] val = new int[width, maxHeight, length];
         //print(val[1, 0, 2]);
         for (int x = 0; x < width; x++)
@@ -41,10 +53,36 @@ public class PlaneBuilderWithMesh : MonoBehaviour
     }
 
 
-    private void GenerateGround()
+    private MeshData GenerateGround()
     {
+        //MeshData data;
+        int[,,] places = new int[width, maxDepth + maxElevation, length];
+        float randVal = 0;
+        //float randVal = System.DateTime.Now.Second;
+        float scaleVal = 10f;
+
+        for (int x = 0; x < width; x++)
+        {
+            float realX = x / scaleVal + randVal;
+            for (int z = 0; z < length; z++)
+            {
+                float realZ = z / scaleVal + randVal;
+
+                float noiseValue = Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(realX, realZ));
+
+                int mappedHeight = (int)Mathf.Lerp(maxDepth, maxElevation, noiseValue);
+                for (int y = mappedHeight; y > maxDepth; y--)
+                {
+                    places[x, y, z] = 1;
+                }
+                places[x, mappedHeight, z] = 1;
+            }
+        }
+        p = places;
+        return MarchingCubes.GetDataMarchingCubes(places);
 
     }
+
     private void Test(MeshFilter rend)
     {
         int[,,] val = new int[,,]

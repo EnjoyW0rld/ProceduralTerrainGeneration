@@ -349,16 +349,8 @@ public class MarchingCubes : MonoBehaviour
         if (corners[7] == 0) res |= 128;
         return res;
     }
-    private static void MarchAlgorithm(int[,,] values)
+    private static void MarchAlgorithm(int[,,] values, List<Vector3> vertices, List<int> faces)
     {
-        
-    }
-    public static Mesh GetMeshMarchingCubes(int[,,] values)
-    {
-        List<Vector3> vertices = new List<Vector3>();
-        List<int> faces = new List<int>();
-
-        Mesh mesh = new Mesh();
         for (int x = 0; x < values.GetLength(0) - 1; x++)
         {
             int nextX = x + 1 == values.GetLength(0) ? 0 : x + 1;
@@ -374,12 +366,23 @@ public class MarchingCubes : MonoBehaviour
 
                     int currCase = GetCase(corn);
                     if (currCase != 0 || currCase != index.Count - 1) print(currCase);
-                    AddVertices(currCase, new Vector3(x, y, z),vertices);
-                    AddTries(currCase,faces);
+                    AddVertices(currCase, new Vector3(x, y, z), vertices);
+                    AddTries(currCase, faces);
 
                 }
             }
         }
+    }
+
+    public static Mesh GetMeshMarchingCubes(int[,,] values)
+    {
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> faces = new List<int>();
+
+        Mesh mesh = new Mesh();
+        
+        MarchAlgorithm(values, vertices, faces);
+
         mesh.vertices = vertices.ToArray();
         mesh.triangles = faces.ToArray();
         mesh.RecalculateNormals();
@@ -388,8 +391,14 @@ public class MarchingCubes : MonoBehaviour
     }
     public static MeshData GetDataMarchingCubes(int[,,] values)
     {
-        return null;
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> faces = new List<int>();
+
+        MarchAlgorithm(values, vertices, faces);
+
+        return new MeshData(vertices, faces);
     }
+
     private static void AddTries(int ind, List<int> tries)
     {
         int triCount = index[ind].Length / 3;
@@ -436,4 +445,5 @@ public class MeshData
         this.vertices = vertices;
         this.faces = faces;
     }
+
 }
