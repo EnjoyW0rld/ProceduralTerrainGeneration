@@ -14,6 +14,6 @@ public class ComputeShaderTest : MonoBehaviour
         renderTexture.Create();
 
         shader.SetTexture(0,"Result",renderTexture);
-        shader.Dispatch(0, renderTexture.width / 8, renderTexture.width / 8, 1);
+        shader.Dispatch(0, renderTexture.width / 8, 1, 1);
     }
 }

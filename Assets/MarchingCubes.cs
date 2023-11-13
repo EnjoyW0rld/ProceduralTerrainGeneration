@@ -365,7 +365,6 @@ public class MarchingCubes : MonoBehaviour
                         values[x, nextY, nextZ], values[nextX, nextY, nextZ], values[nextX, nextY, z], values[x, nextY, z] };
 
                     int currCase = GetCase(corn);
-                    if (currCase != 0 || currCase != index.Count - 1) print(currCase);
                     AddVertices(currCase, new Vector3(x, y, z), vertices);
                     AddTries(currCase, faces);
 
