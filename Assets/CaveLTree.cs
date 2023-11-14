@@ -18,8 +18,8 @@ public class CaveLTree : MonoBehaviour
     private List<LConnection> conns;
 
     //DEBUG VARIABLES
-
     private Vector3 startPos;
+
     private void Start()
     {
         filter = GetComponent<MeshFilter>();
@@ -29,28 +29,100 @@ public class CaveLTree : MonoBehaviour
         conns = conn.StartCreation();
         //LConnection iter = conns[0];
         ApplyLTreeToGrid(conns, grid);
-        /*
-                for (int x = 0; x < grid.GetLength(0); x++)
-                {
-                    for (int y = 0; y < grid.GetLength(1); y++)
-                    {
-                        for (int z = 0; z < grid.GetLength(2); z++)
-                        {
-                            if (Random.value < chanceToSpawnAlive) grid[x, y, z] = 1;
-                            //grid[x, 2, 2] = 1;
-                        }
-                    }
-                }
-                StartCoroutine(IDoSimulation());
-                return;
-                for (int i = 0; i < 10; i++)
-                {
-                    grid = DoSimulationStep(grid);
-                }*/
 
-        //DrawLine(grid, new int[] { 2, 2, 2 }, poss);
         GetComponent<MeshFilter>().mesh = MarchingCubes.GetMeshMarchingCubes(grid);
     }
+    private void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid)
+    {
+        List<LConnection> built = new List<LConnection>();
+        for (int i = 0; i < conns.Count; i++)
+        {
+            LConnection currentConn = conns[i];
+            while (currentConn.previousConnection != null)
+            {
+                if (built.Contains(currentConn)) break;
+                DrawLine(grid, currentConn.currentPos, currentConn.previousConnection.currentPos);
+                built.Add(currentConn);
+                currentConn = currentConn.previousConnection;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Add points to grid to form a line between two points
+    /// </summary>
+    /// <param name="grid"></param>
+    /// <param name="pos1"></param>
+    /// <param name="pos2"></param>
+    private void DrawLine(int[,,] grid, int[] pos1, int[] pos2)
+    {
+        //grid[pos1[0], pos1[1], pos1[2]] = 1;
+        //grid[pos2[0], pos2[1], pos2[2]] = 1;
+        Vector3 vpos1 = new Vector3(pos1[0], pos1[1], pos1[2]);
+        Vector3 vpos2 = new Vector3(pos2[0], pos2[1], pos2[2]);
+        Vector3 dir = (vpos2 - vpos1).normalized;
+        int steps = (int)Vector3.Distance(vpos1, vpos2);
+        int width = 1;
+        for (int i = 0; i < steps; i++)
+        {
+            Vector3Int rounded = new Vector3Int(pos1[0] + Mathf.RoundToInt((dir.x * i)),
+                pos1[1] + Mathf.RoundToInt((dir.y * i)),
+                pos1[2] + Mathf.RoundToInt((dir.z * i)));
+            SetPointsAround(width, rounded, grid);
+            //grid[pos1[0] + Mathf.RoundToInt((dir.x * i)), pos1[1] + Mathf.RoundToInt((dir.y * i)), pos1[2] + Mathf.RoundToInt((dir.z * i))] = 1;
+        }
+    }
+    private void DrawLine(int[,,] grid, Vector3 pos1, Vector3 pos2) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z });
+    /// <summary>
+    /// Helper function for DrawLine func
+    /// </summary>
+    /// <param name="width"></param>
+    /// <param name="pos"></param>
+    /// <param name="grid"></param>
+    private void SetPointsAround(int width, Vector3Int pos, int[,,] grid)
+    {
+        for (int x = pos.x - width; x < pos.x + width + 1; x++)
+        {
+            if (x < 0 || x > grid.GetLength(0) - 1) continue;
+            for (int y = pos.y - width; y < pos.y + width + 1; y++)
+            {
+                if (y < 0 || y > grid.GetLength(1) - 1) continue;
+                for (int z = pos.z - width; z < pos.z + width + 1; z++)
+                {
+                    if (z < 0 || z > grid.GetLength(2) - 1) continue;
+                    grid[x, y, z] = 1;
+                }
+            }
+        }
+    }
+    //DEBUG
+    private void DrawConnect(LConnection conn)
+    {
+        Gizmos.DrawSphere(conn.currentPos, .1f);
+        if (conn.previousConnection != null)
+        {
+            Gizmos.DrawLine(conn.currentPos, conn.previousConnection.currentPos);
+            DrawConnect(conn.previousConnection);
+        }
+    }
+    private void OnDrawGizmosSelected()
+    {
+        if (conns != null)
+        {
+            foreach (var conn in conns)
+            {
+                DrawConnect((LConnection)conn);
+                //Gizmos.DrawSphere(conn.currentPos, .1f);
+                //Gizmos.DrawSphere(conn.previousConnection.currentPos, .1f);
+                //Gizmos.DrawLine(conn.currentPos, conn.previousConnection.currentPos);
+            }
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(startPos, .7f);
+        }
+    }
+
+    #region LegacyFunctions(obsolete)
+
     IEnumerator IDoSimulation()
     {
         for (int i = 0; i < 15; i++)
@@ -123,91 +195,8 @@ public class CaveLTree : MonoBehaviour
         }
         return res;
     }
-    private void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid)
-    {
-        List<LConnection> built = new List<LConnection>();
-        for (int i = 0; i < conns.Count; i++)
-        {
-            LConnection currentConn = conns[i];
-            while (currentConn.previousConnection != null)
-            {
-                if (built.Contains(currentConn)) break;
-                DrawLine(grid, currentConn.currentPos, currentConn.previousConnection.currentPos);
-                built.Add(currentConn);
-                currentConn = currentConn.previousConnection;
-            }
-        }
-    }
 
-    private void DrawLine(int[,,] grid, Vector3 pos1, Vector3 pos2) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z });
-    private void DrawLine(int[,,] grid, int[] pos1, int[] pos2)
-    {
-        //grid[pos1[0], pos1[1], pos1[2]] = 1;
-        //grid[pos2[0], pos2[1], pos2[2]] = 1;
-        Vector3 vpos1 = new Vector3(pos1[0], pos1[1], pos1[2]);
-        Vector3 vpos2 = new Vector3(pos2[0], pos2[1], pos2[2]);
-        Vector3 dir = (vpos2 - vpos1).normalized;
-        int steps = (int)Vector3.Distance(vpos1, vpos2);
-        int width = 1;
-        for (int i = 0; i < steps; i++)
-        {
-            Vector3Int rounded = new Vector3Int(pos1[0] + Mathf.RoundToInt((dir.x * i)),
-                pos1[1] + Mathf.RoundToInt((dir.y * i)),
-                pos1[2] + Mathf.RoundToInt((dir.z * i)));
-            SetPointsAround(width, rounded, grid);
-            //grid[pos1[0] + Mathf.RoundToInt((dir.x * i)), pos1[1] + Mathf.RoundToInt((dir.y * i)), pos1[2] + Mathf.RoundToInt((dir.z * i))] = 1;
-        }
-    }
-    private void SetPointsAround(int width, Vector3Int pos, int[,,] grid)
-    {
-        for (int x = pos.x - width; x < pos.x + width + 1; x++)
-        {
-            if (x < 0 || x > grid.GetLength(0) - 1) continue;
-            for (int y = pos.y - width; y < pos.y + width + 1; y++)
-            {
-                if (y < 0 || y > grid.GetLength(1) - 1) continue;
-                for (int z = pos.z - width; z < pos.z + width + 1; z++)
-                {
-                    if (z < 0 || z > grid.GetLength(2) - 1) continue;
-                    grid[x, y, z] = 1;
-                }
-            }
-        }
-    }
-    //DEBUG
-    private void Test(int rep)
-    {
-        if (rep == 0)
-        {
-            print("done");
-            return;
-        }
-        Test(--rep);
-    }
-    private void DrawConnect(LConnection conn)
-    {
-        Gizmos.DrawSphere(conn.currentPos, .1f);
-        if (conn.previousConnection != null)
-        {
-            Gizmos.DrawLine(conn.currentPos, conn.previousConnection.currentPos);
-            DrawConnect(conn.previousConnection);
-        }
-    }
-    private void OnDrawGizmosSelected()
-    {
-        if (conns != null)
-        {
-            foreach (var conn in conns)
-            {
-                DrawConnect((LConnection)conn);
-                //Gizmos.DrawSphere(conn.currentPos, .1f);
-                //Gizmos.DrawSphere(conn.previousConnection.currentPos, .1f);
-                //Gizmos.DrawLine(conn.currentPos, conn.previousConnection.currentPos);
-            }
-            Gizmos.color = Color.red;
-            Gizmos.DrawSphere(startPos, .7f);
-        }
-    }
+    #endregion
 }
 
 public class LConnection

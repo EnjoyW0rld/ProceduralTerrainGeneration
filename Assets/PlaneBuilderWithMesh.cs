@@ -38,13 +38,13 @@ public class PlaneBuilderWithMesh : MonoBehaviour
         rend.mesh = mesh;
 
         mesh.uv = BuildSurfaceUV(data.vertices);
-      
+
         //return;
         //SETTING TEXTURE TO SHADER
         GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_Texture2D", tex);
     }
 
-
+    [System.Obsolete]
     private MeshData GenerateGround()
     {
         //MeshData data;
@@ -99,6 +99,7 @@ public class PlaneBuilderWithMesh : MonoBehaviour
 
 
     }
+    [System.Obsolete]
     private MeshData GenerateBiomes()
     {
         BiomeManager biome = new BiomeManager(width, length);
@@ -142,7 +143,6 @@ public class PlaneBuilderWithMesh : MonoBehaviour
         float randVal = System.DateTime.Now.Second;
         float scaleVal = 10f;
         tex = new Texture2D(width, length); //Generating texture
-
 
         for (int x = 0; x < width; x++)
         {
