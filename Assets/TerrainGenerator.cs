@@ -17,32 +17,48 @@ public class TerrainGenerator : MonoBehaviour
     {
         grid = new int[size, maxDepth + maxElevation, size];
         tex = new Texture2D(size, size);
-        //int[,,] caveGrid = new int[size, maxDepth, size];
-        GenerateBiomesWithNoises(grid, size, size, maxElevation, maxDepth,tex);
-        CaveLTree.CreateCave(grid, new Vector3(size / 2, maxDepth + 2, size / 2), 10, 10, -2);
-        for (int i = maxDepth; i != (maxElevation + maxDepth) - 1; i++)
-        {
-            grid[size / 2, i, size / 2] = 0;
-        }
+        
+        GenerateBiomesWithNoises(grid, size, size, maxElevation, maxDepth, tex);
+        FillWithOne(grid, maxElevation);
+        CaveLTree.CreateCave(grid, new Vector3(size / 2, maxDepth + 2, size / 2), 10, 10, -2,false);
+        CaveLTree.DrawLine(grid, new Vector3(size / 2, maxDepth + 2, size / 2), new Vector3(size / 2, maxDepth + maxElevation, size / 2), false);
+        /*
+                for (int i = maxDepth; i != (maxElevation + maxDepth) - 1; i++)
+                {
+                    grid[size / 2, i, size / 2] = 0;
+                }*/
         //CopyToArray(caveGrid, grid);
-        tex = new LinearBlur().Blur(tex, 3, 2);
+        tex = new LinearBlur().Blur(tex, 2, 2);
         //tex.Reinitialize(size * 2, size * 2);
 
         MeshData meshData = MarchingCubes.GetDataMarchingCubes(grid);
         Mesh mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        
+
         mesh.SetVertices(meshData.vertices);
         mesh.SetTriangles(meshData.faces, 0);
         mesh.uv = BuildSurfaceUV(meshData.vertices, size, size);
         mesh.RecalculateNormals();
 
-        GetComponent<MeshFilter>().mesh = mesh; 
+        GetComponent<MeshFilter>().mesh = mesh;
         GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_Texture2D", tex);
 
     }
 
-    private static void GenerateBiomesWithNoises(int[,,] grid, int width, int length, int maxElevation, int maxDepth,Texture2D tex = null)
+    private static void FillWithOne(int[,,] grid, int fillHeight)
+    {
+        for (int x = 0; x < grid.GetLength(0); x++)
+        {
+            for (int y = 0; y < grid.GetLength(1) - fillHeight; y++)
+            {
+                for (int z = 0; z < grid.GetLength(2); z++)
+                {
+                    grid[x, y, z] = 1;
+                }
+            }
+        }
+    }
+    private static void GenerateBiomesWithNoises(int[,,] grid, int width, int length, int maxElevation, int maxDepth, Texture2D tex = null)
     {
         BiomeManager biome = new BiomeManager(width, length);
         //int[,,] places = new int[width, maxDepth + maxElevation, length];
@@ -61,7 +77,7 @@ public class TerrainGenerator : MonoBehaviour
                 if (biomeNum == 1)
                 {
                     noiseValue = Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(realX, realZ));
-                    if (tex != null) tex.SetPixel(x, z, new Color(0,0,0));
+                    if (tex != null) tex.SetPixel(x, z, new Color(0, 0, 0));
                 }
                 else
                 {
@@ -112,7 +128,7 @@ public class TerrainGenerator : MonoBehaviour
             }
         }
     }
-    private static Vector2[] BuildSurfaceUV(List<Vector3> vert,float width,float length)
+    private static Vector2[] BuildSurfaceUV(List<Vector3> vert, float width, float length)
     {
         Vector2[] uv = new Vector2[vert.Count];
         for (int i = 0; i < vert.Count; i++)

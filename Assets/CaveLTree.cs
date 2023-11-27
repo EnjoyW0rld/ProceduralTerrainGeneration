@@ -28,7 +28,7 @@ public class CaveLTree : MonoBehaviour
 
         GetComponent<MeshFilter>().mesh = MarchingCubes.GetMeshMarchingCubes(grid);
     }
-    private static void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid)
+    private static void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid, bool fillWithOne = true)
     {
         List<LConnection> built = new List<LConnection>();
         for (int i = 0; i < conns.Count; i++)
@@ -37,7 +37,7 @@ public class CaveLTree : MonoBehaviour
             while (currentConn.previousConnection != null)
             {
                 if (built.Contains(currentConn)) break;
-                DrawLine(grid, currentConn.currentPos, currentConn.previousConnection.currentPos);
+                DrawLine(grid, currentConn.currentPos, currentConn.previousConnection.currentPos,fillWithOne);
                 built.Add(currentConn);
                 currentConn = currentConn.previousConnection;
             }
@@ -93,11 +93,11 @@ public class CaveLTree : MonoBehaviour
         }
     }
 
-    public static void CreateCave(int[,,] grid, Vector3 entryPos, int maxDist, int repetition, int vertialDir)
+    public static void CreateCave(int[,,] grid, Vector3 entryPos, int maxDist, int repetition, int vertialDir, bool fillWithOne = true)
     {
         LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, vertialDir, 0).normalized);
         List<LConnection> conArr = init.StartCreation();
-        ApplyLTreeToGrid(conArr, grid);
+        ApplyLTreeToGrid(conArr, grid,fillWithOne);
     }
 
     //DEBUG
