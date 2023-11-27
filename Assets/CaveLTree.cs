@@ -10,10 +10,6 @@ public class CaveLTree : MonoBehaviour
     [SerializeField] private int maxDist;
 
 
-    [Header("Cellular Automata")]
-    [SerializeField] private float chanceToSpawnAlive = .45f;
-    [SerializeField] private int deathLimit = 3;
-    [SerializeField] private int birthLimit = 4;
     private MeshFilter filter;
     private List<LConnection> conns;
 
@@ -24,7 +20,7 @@ public class CaveLTree : MonoBehaviour
     {
         filter = GetComponent<MeshFilter>();
         grid = new int[60, 40, 60];
-        LConnection conn = new LConnection(new Vector3(30, 30, 30), maxDist, 6, LConnection.State.A, new Vector3(0, -1, 0).normalized);
+        LConnection conn = new LConnection(new Vector3(30, 30, 30), maxDist, 6, LConnection.State.A, new Vector3(0, -5, 0).normalized);
         startPos = new Vector3(30, 30, 30);
         conns = conn.StartCreation();
         //LConnection iter = conns[0];
@@ -32,7 +28,7 @@ public class CaveLTree : MonoBehaviour
 
         GetComponent<MeshFilter>().mesh = MarchingCubes.GetMeshMarchingCubes(grid);
     }
-    private void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid)
+    private static void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid)
     {
         List<LConnection> built = new List<LConnection>();
         for (int i = 0; i < conns.Count; i++)
@@ -54,8 +50,9 @@ public class CaveLTree : MonoBehaviour
     /// <param name="grid"></param>
     /// <param name="pos1"></param>
     /// <param name="pos2"></param>
-    private void DrawLine(int[,,] grid, int[] pos1, int[] pos2)
+    public static void DrawLine(int[,,] grid, int[] pos1, int[] pos2, bool fillWithOne = true)
     {
+        int fillValue = fillWithOne ? 1 : 0;
         //grid[pos1[0], pos1[1], pos1[2]] = 1;
         //grid[pos2[0], pos2[1], pos2[2]] = 1;
         Vector3 vpos1 = new Vector3(pos1[0], pos1[1], pos1[2]);
@@ -68,18 +65,18 @@ public class CaveLTree : MonoBehaviour
             Vector3Int rounded = new Vector3Int(pos1[0] + Mathf.RoundToInt((dir.x * i)),
                 pos1[1] + Mathf.RoundToInt((dir.y * i)),
                 pos1[2] + Mathf.RoundToInt((dir.z * i)));
-            SetPointsAround(width, rounded, grid);
+            SetPointsAround(width, rounded, grid,fillValue);
             //grid[pos1[0] + Mathf.RoundToInt((dir.x * i)), pos1[1] + Mathf.RoundToInt((dir.y * i)), pos1[2] + Mathf.RoundToInt((dir.z * i))] = 1;
         }
     }
-    private void DrawLine(int[,,] grid, Vector3 pos1, Vector3 pos2) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z });
+    public static void DrawLine(int[,,] grid, Vector3 pos1, Vector3 pos2,bool fillWithOne = true) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z },fillWithOne);
     /// <summary>
     /// Helper function for DrawLine func
     /// </summary>
     /// <param name="width"></param>
     /// <param name="pos"></param>
     /// <param name="grid"></param>
-    private void SetPointsAround(int width, Vector3Int pos, int[,,] grid)
+    private static void SetPointsAround(int width, Vector3Int pos, int[,,] grid, int fillValue)
     {
         for (int x = pos.x - width; x < pos.x + width + 1; x++)
         {
@@ -90,11 +87,19 @@ public class CaveLTree : MonoBehaviour
                 for (int z = pos.z - width; z < pos.z + width + 1; z++)
                 {
                     if (z < 0 || z > grid.GetLength(2) - 1) continue;
-                    grid[x, y, z] = 1;
+                    grid[x, y, z] = fillValue;
                 }
             }
         }
     }
+
+    public static void CreateCave(int[,,] grid, Vector3 entryPos, int maxDist, int repetition, int vertialDir)
+    {
+        LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, vertialDir, 0).normalized);
+        List<LConnection> conArr = init.StartCreation();
+        ApplyLTreeToGrid(conArr, grid);
+    }
+
     //DEBUG
     private void DrawConnect(LConnection conn)
     {
@@ -121,82 +126,6 @@ public class CaveLTree : MonoBehaviour
         }
     }
 
-    #region LegacyFunctions(obsolete)
-
-    IEnumerator IDoSimulation()
-    {
-        for (int i = 0; i < 15; i++)
-        {
-            grid = DoSimulationStep(grid);
-            filter.mesh = MarchingCubes.GetMeshMarchingCubes(grid);
-            print(i);
-            yield return new WaitForSeconds(1.5f);
-        }
-    }
-    private int[,,] DoSimulationStep(int[,,] grid)
-    {
-        int[,,] newGrid = new int[grid.GetLength(0), grid.GetLength(1), grid.GetLength(2)];
-        //newGrid = grid.Clone();
-        //grid.CopyTo(newGrid, 0);
-
-
-        for (int x = 0; x < grid.GetLength(0); x++)
-        {
-            for (int y = 0; y < grid.GetLength(1); y++)
-            {
-                for (int z = 0; z < grid.GetLength(2); z++)
-                {
-                    int nbs = CountAliveNeighbours(grid, x, y, z);
-
-                    if (grid[x, y, z] == 1)
-                    {
-                        if (nbs < deathLimit) newGrid[x, y, z] = 0;
-                        else newGrid[x, y, z] = 1;
-                    }
-                    else
-                    {
-                        if (nbs < birthLimit) newGrid[x, y, z] = 1;
-                        else newGrid[x, y, z] = 0;
-                    }
-                }
-            }
-        }
-        return newGrid;
-    }
-    private int CountAliveNeighbours(int[,,] grid, int x, int y, int z)
-    {
-        int res = 0;
-
-        for (int px = x - 1; px < x + 2; px++)
-        {
-            if (px < 0 || px > grid.GetLength(0) - 1)
-            {
-                res++;
-                continue;
-            }
-            for (int py = y - 1; py < y + 2; py++)
-            {
-                if (py < 0 || py > grid.GetLength(1) - 1)
-                {
-                    res++;
-                    continue;
-                }
-                for (int pz = z - 1; pz < z + 2; pz++)
-                {
-                    if (pz < 0 || pz > grid.GetLength(2) - 1)
-                    {
-                        res++;
-                        continue;
-                    }
-                    if (px == x && py == y && pz == z) continue;
-                    if (grid[px, py, pz] == 1) res++;
-                }
-            }
-        }
-        return res;
-    }
-
-    #endregion
 }
 
 public class LConnection
@@ -247,7 +176,7 @@ public class LConnection
     {
         //Vector3 nextPos = Quaternion.Euler(Random.Range(-45, 45) * 0, Random.Range(-45, 45), Random.Range(-45, 45) * 0) * dir;
         //Debug.Log(nextPos + "next pos");
-        Vector3 nextPos = currentPos + new Vector3(Random.Range(-maxDist, maxDist), dir.y * Random.Range(-maxDist, maxDist), Random.Range(0, maxDist));
+        Vector3 nextPos = currentPos + new Vector3(Random.Range(-maxDist, maxDist), dir.y * Random.Range(1, maxDist), Random.Range(0, maxDist));
         LConnection nextConnection = new LConnection(nextPos, maxDist, repetition - 1, State.B, dir * STRAIGHTENING, this);
         nextConnection.SpawnNext(conn);
     }
@@ -255,8 +184,8 @@ public class LConnection
     {
         //Vector3 nextPos1 = Quaternion.Euler(Random.Range(-45, 45) * 0, Random.Range(-45, 45), Random.Range(-45, 45) * 0) * dir;
         //Vector3 nextPos2 = Quaternion.Euler(Random.Range(-45, 45) * 0, Random.Range(-45, 45), Random.Range(-45, 45) * 0) * dir;
-        Vector3 nextPos1 = currentPos + new Vector3(Random.Range(-maxDist, maxDist), dir.y, Random.Range(-maxDist, maxDist));
-        Vector3 nextPos2 = currentPos + new Vector3(Random.Range(-maxDist, maxDist), dir.y, Random.Range(-maxDist, maxDist));
+        Vector3 nextPos1 = currentPos + new Vector3(Random.Range(-maxDist, maxDist), dir.y * Random.Range(1, maxDist), Random.Range(-maxDist, maxDist));
+        Vector3 nextPos2 = currentPos + new Vector3(Random.Range(-maxDist, maxDist), dir.y * Random.Range(1, maxDist), Random.Range(-maxDist, maxDist));
         LConnection nextConnection1 = new LConnection(nextPos1, maxDist, repetition - 1, State.B, dir * STRAIGHTENING, this);
         LConnection nextConnection2 = new LConnection(nextPos2, maxDist, repetition - 1, State.A, dir * STRAIGHTENING, this);
         nextConnection1.SpawnNext(conn);

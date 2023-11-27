@@ -6,7 +6,6 @@ using UnityEngine;
 public class MarchingCubes : MonoBehaviour
 {
     [SerializeField] private int tryCase;
-    [SerializeField] private int[] cubes = new int[8];
     private static readonly List<int[]> index = new List<int[]>() {
   new int[]{},
   new int[]{0, 8, 3},
