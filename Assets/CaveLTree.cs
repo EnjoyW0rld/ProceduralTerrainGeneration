@@ -10,7 +10,6 @@ public class CaveLTree : MonoBehaviour
     [SerializeField] private int maxDist;
 
 
-    private MeshFilter filter;
     private List<LConnection> conns;
 
     //DEBUG VARIABLES
@@ -18,7 +17,6 @@ public class CaveLTree : MonoBehaviour
 
     private void Start()
     {
-        filter = GetComponent<MeshFilter>();
         grid = new int[60, 40, 60];
         LConnection conn = new LConnection(new Vector3(30, 30, 30), maxDist, 6, LConnection.State.A, new Vector3(0, -5, 0).normalized);
         startPos = new Vector3(30, 30, 30);
@@ -93,9 +91,9 @@ public class CaveLTree : MonoBehaviour
         }
     }
 
-    public static void CreateCave(int[,,] grid, Vector3 entryPos, int maxDist, int repetition, int vertialDir, bool fillWithOne = true)
+    public static void CreateCave(int[,,] grid, Vector3 entryPos, int maxDist, int repetition, int verticalDir, bool fillWithOne = true)
     {
-        LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, vertialDir, 0).normalized);
+        LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, verticalDir, 0).normalized);
         List<LConnection> conArr = init.StartCreation();
         ApplyLTreeToGrid(conArr, grid,fillWithOne);
     }

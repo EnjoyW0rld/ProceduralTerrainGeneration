@@ -22,27 +22,23 @@ public class TerrainGenerator : MonoBehaviour
         FillWithOne(grid, maxElevation);
         CaveLTree.CreateCave(grid, new Vector3(size / 2, maxDepth + 2, size / 2), 10, 10, -2,false);
         CaveLTree.DrawLine(grid, new Vector3(size / 2, maxDepth + 2, size / 2), new Vector3(size / 2, maxDepth + maxElevation, size / 2), false);
-        /*
-                for (int i = maxDepth; i != (maxElevation + maxDepth) - 1; i++)
-                {
-                    grid[size / 2, i, size / 2] = 0;
-                }*/
-        //CopyToArray(caveGrid, grid);
+
         tex = new LinearBlur().Blur(tex, 2, 2);
-        //tex.Reinitialize(size * 2, size * 2);
 
         MeshData meshData = MarchingCubes.GetDataMarchingCubes(grid);
         Mesh mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-
+        //Applying data to mesh
         mesh.SetVertices(meshData.vertices);
         mesh.SetTriangles(meshData.faces, 0);
         mesh.uv = BuildSurfaceUV(meshData.vertices, size, size);
         mesh.RecalculateNormals();
 
         GetComponent<MeshFilter>().mesh = mesh;
-        GetComponent<MeshRenderer>().sharedMaterial.SetTexture("_Texture2D", tex);
-
+        MeshRenderer rend = GetComponent<MeshRenderer>();
+        rend.sharedMaterial.SetTexture("_Texture2D", tex);
+        rend.sharedMaterial.SetFloat("_CaveHeight", maxDepth);
+        
     }
 
     private static void FillWithOne(int[,,] grid, int fillHeight)
