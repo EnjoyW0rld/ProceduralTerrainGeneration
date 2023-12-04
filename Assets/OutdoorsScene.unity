@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 2168.789, g: 2281.1035, b: 3333.4219, a: 1}
+  m_IndirectSpecularColor: {r: 2166.9004, g: 2277.9453, b: 3325.5625, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -643,6 +643,7 @@ MonoBehaviour:
   maxElevation: 15
   maxDepth: 40
   size: 60
+  tex: {fileID: 0}
 --- !u!33 &416688629
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -659,7 +660,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 416688627}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 2
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0

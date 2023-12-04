@@ -275,13 +275,13 @@ public class MarchingCubes : MonoBehaviour
         float f = System.DateTime.Now.Second / 4.3f;
         int val = 10;
         int[,,] test = new int[10, 10, 10];
-        
+
         for (int x = 0; x < val; x++)
         {
             float realX = x / (float)val;
             for (int y = 0; y < val; y++)
             {
-                float realY = y / (float)val ;
+                float realY = y / (float)val;
                 for (int z = 0; z < val; z++)
                 {
                     float realZ = z / (float)val;
@@ -348,8 +348,10 @@ public class MarchingCubes : MonoBehaviour
         if (corners[7] == 0) res |= 128;
         return res;
     }
+
     private static void MarchAlgorithm(int[,,] values, List<Vector3> vertices, List<int> faces)
     {
+        Dictionary<Vector3, int> vertexInd = new Dictionary<Vector3, int>(); //FOr case with shared vertices
         for (int x = 0; x < values.GetLength(0) - 1; x++)
         {
             int nextX = x + 1 == values.GetLength(0) ? 0 : x + 1;
@@ -364,8 +366,8 @@ public class MarchingCubes : MonoBehaviour
                         values[x, nextY, nextZ], values[nextX, nextY, nextZ], values[nextX, nextY, z], values[x, nextY, z] };
 
                     int currCase = GetCase(corn);
-                    AddVertices(currCase, new Vector3(x, y, z), vertices);
-                    AddTries(currCase, faces);
+                    AddVertices(currCase, new Vector3(x, y, z), vertices,vertexInd);
+                    AddTries(currCase, faces,new Vector3(x,y,z),vertexInd);
 
                 }
             }
@@ -378,7 +380,7 @@ public class MarchingCubes : MonoBehaviour
         List<int> faces = new List<int>();
 
         Mesh mesh = new Mesh();
-        
+
         MarchAlgorithm(values, vertices, faces);
 
         mesh.vertices = vertices.ToArray();
@@ -396,7 +398,24 @@ public class MarchingCubes : MonoBehaviour
 
         return new MeshData(vertices, faces);
     }
+    private static void AddTries(int ind, List<int> tries, Vector3 offset,Dictionary<Vector3, int> vertexInd)
+    {
+        /*int triCount = index[ind].Length / 3;
+        for (int i = 0; i < triCount; i++)
+        {
 
+            int startInd = tries.Count;
+            tries.Add(startInd);
+            tries.Add(startInd + 1);
+            tries.Add(startInd + 2);
+        }*/
+        for (int i = 0; i < index[ind].Length; i++)
+        {
+            Vector3 pos = GetPos(index[ind][i], offset);
+            tries.Add(vertexInd[pos]);
+        }
+    }
+    //Function with no shared vertices
     private static void AddTries(int ind, List<int> tries)
     {
         int triCount = index[ind].Length / 3;
@@ -408,6 +427,20 @@ public class MarchingCubes : MonoBehaviour
             tries.Add(startInd + 2);
         }
     }
+    private static void AddVertices(int ind, Vector3 offset, List<Vector3> vec, Dictionary<Vector3, int> vertexInd)
+    {
+        for (int i = 0; i < index[ind].Length; i++)
+        {
+            Vector3 pos = GetPos(index[ind][i], offset);
+            if (vertexInd.ContainsKey(pos))
+            {
+                continue;
+            }
+            vec.Add(pos);
+            vertexInd.Add(pos, vec.Count - 1);
+        }
+    }
+    //Function with no shared vertices
     private static void AddVertices(int ind, Vector3 offset, List<Vector3> vec)
     {
         for (int i = 0; i < index[ind].Length; i++)
