@@ -17,14 +17,14 @@ public class TerrainGenerator : MonoBehaviour
     {
         grid = new int[size, maxDepth + maxElevation, size];
         tex = new Texture2D(size, size);
-        
+
         GenerateBiomesWithNoises(grid, size, size, maxElevation, maxDepth, tex);
         FillWithOne(grid, maxElevation);
-        CaveLTree.CreateCave(grid, new Vector3(size / 2, maxDepth + 2, size / 2), 10, 10, -2,false);
+        CaveLTree.CreateCave(grid, new Vector3(size / 2, maxDepth + 2, size / 2), 10, 10, -2, false);
         CaveLTree.DrawLine(grid, new Vector3(size / 2, maxDepth + 2, size / 2), new Vector3(size / 2, maxDepth + maxElevation, size / 2), false);
 
         tex = new LinearBlur().Blur(tex, 2, 2);
-
+        //Creating Mesh
         MeshData meshData = MarchingCubes.GetDataMarchingCubes(grid);
         Mesh mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
@@ -38,7 +38,7 @@ public class TerrainGenerator : MonoBehaviour
         MeshRenderer rend = GetComponent<MeshRenderer>();
         rend.sharedMaterial.SetTexture("_Texture2D", tex);
         rend.sharedMaterial.SetFloat("_CaveHeight", maxDepth);
-        
+
     }
 
     private static void FillWithOne(int[,,] grid, int fillHeight)
@@ -86,6 +86,46 @@ public class TerrainGenerator : MonoBehaviour
                 for (int y = mappedHeight; y > maxDepth; y--)
                 {
                     grid[x, y, z] = 1;
+                }
+                grid[x, mappedHeight, z] = 1;
+            }
+
+        }
+        tex.Apply();
+    }
+    private static void GenerateBiomesWithNoiseSmoothed(float[,,] grid, int width, int length, int maxElevation, int maxDepth, Texture2D tex = null)
+    {
+        BiomeManager biome = new BiomeManager(width, length);
+        //int[,,] places = new int[width, maxDepth + maxElevation, length];
+        float randVal = System.DateTime.Now.Second;
+        float scaleVal = 10f;
+        //Texture2D tex = new Texture2D(width, length); //Generating texture
+
+        for (int x = 0; x < width; x++)
+        {
+            float realX = x / scaleVal + randVal; //mapped X value
+            for (int z = 0; z < length; z++)
+            {
+                float realZ = z / scaleVal + randVal; //mapped Z value
+                int biomeNum = biome.GetBiomeNum(new Vector3(x, 0, z));
+                float noiseValue;
+                if (biomeNum == 1)
+                {
+                    noiseValue = Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(realX, realZ));
+                    if (tex != null) tex.SetPixel(x, z, new Color(0, 0, 0));
+                }
+                else
+                {
+                    noiseValue = Fbm.GetValue(realX, realZ, 6, 1);
+                    if (tex != null) tex.SetPixel(x, z, new Color(1, 1, 1));
+
+                }
+                int mappedHeight = (int)Mathf.Lerp(maxDepth, maxElevation + maxDepth, noiseValue);
+                //tex.SetPixel(x, z, new Color(biomeNum / 10f, biomeNum / 10f, biomeNum / 10f));
+                for (int y = mappedHeight; y > maxDepth; y--)
+                {
+                    //grid[x, y, z] = 1;
+                    grid[x, y, z] = y / mappedHeight;//Mathf.Lerp(1, 0, y / mappedHeight);
                 }
                 grid[x, mappedHeight, z] = 1;
             }

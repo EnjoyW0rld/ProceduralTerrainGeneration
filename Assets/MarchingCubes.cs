@@ -310,6 +310,8 @@ public class MarchingCubes : MonoBehaviour
 
     //STATIC FUNCTIONS
 
+    //int grid functions
+
     private static Vector3 GetPos(int num, Vector3 offset)
     {
         Vector3 pos = Vector3.zero;
@@ -366,8 +368,8 @@ public class MarchingCubes : MonoBehaviour
                         values[x, nextY, nextZ], values[nextX, nextY, nextZ], values[nextX, nextY, z], values[x, nextY, z] };
 
                     int currCase = GetCase(corn);
-                    AddVertices(currCase, new Vector3(x, y, z), vertices,vertexInd);
-                    AddTries(currCase, faces,new Vector3(x,y,z),vertexInd);
+                    AddVertices(currCase, new Vector3(x, y, z), vertices, vertexInd);
+                    AddTries(currCase, faces, new Vector3(x, y, z), vertexInd);
 
                 }
             }
@@ -398,7 +400,7 @@ public class MarchingCubes : MonoBehaviour
 
         return new MeshData(vertices, faces);
     }
-    private static void AddTries(int ind, List<int> tries, Vector3 offset,Dictionary<Vector3, int> vertexInd)
+    private static void AddTries(int ind, List<int> tries, Vector3 offset, Dictionary<Vector3, int> vertexInd)
     {
         /*int triCount = index[ind].Length / 3;
         for (int i = 0; i < triCount; i++)
@@ -448,6 +450,82 @@ public class MarchingCubes : MonoBehaviour
             vec.Add(GetPos(index[ind][i], offset));
         }
     }
+
+    //float grid functions
+    public static Mesh GetMeshMarchingCubes(float[,,] grid, float isoLevel)
+    {
+        Mesh mesh = new Mesh();
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> faces = new List<int>();
+        MarchAlgorithm(grid,vertices,faces,isoLevel);
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = faces.ToArray();
+        return mesh;
+    }
+    public static MeshData GetMeshMarchingCubesData(float[,,] grid, float isoLevel)
+    {
+        Mesh mesh = new Mesh();
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> faces = new List<int>();
+        MarchAlgorithm(grid, vertices, faces, isoLevel);
+        MeshData data = new MeshData(vertices,faces);
+        return data;
+    }
+
+    private static void MarchAlgorithm(float[,,] values, List<Vector3> vertices, List<int> faces, float isoLevel)
+    {
+        Dictionary<Vector3, int> vertexInd = new Dictionary<Vector3, int>(); //FOr case with shared vertices
+        for (int x = 0; x < values.GetLength(0) - 1; x++)
+        {
+            int nextX = x + 1 == values.GetLength(0) ? 0 : x + 1;
+            for (int y = 0; y < values.GetLength(1) - 1; y++)
+            {
+                int nextY = y + 1 == values.GetLength(1) ? 0 : y + 1;
+                for (int z = 0; z < values.GetLength(2) - 1; z++)
+                {
+                    int nextZ = z + 1 == values.GetLength(2) ? 0 : z + 1;
+
+                    int[] corn = new int[] { Threshold(values[x, y, nextZ],isoLevel), Threshold(values[nextX, y, nextZ],isoLevel), Threshold(values[nextX, y, z],isoLevel), Threshold(values[x, y, z],isoLevel),
+                        Threshold(values[x, nextY, nextZ],isoLevel), Threshold(values[nextX, nextY, nextZ],isoLevel), Threshold(values[nextX, nextY, z],isoLevel), Threshold(values[x, nextY, z],isoLevel) };
+
+                    int currCase = GetCase(corn);
+                    float[] cell = new float[] { values[x, y, nextZ], values[nextX, y, nextZ], values[nextX, y, z], values[x, y, z],
+                    values[x, nextY, nextZ], values[nextX, nextY, nextZ], values[nextX, nextY, z], values[x, nextY, z]};
+                    AddVertices(cell, currCase, new Vector3(x,y,z),isoLevel,vertices);
+                    //AddVertices(currCase, new Vector3(x, y, z), vertices, vertexInd);
+                    AddTries(currCase, faces);
+
+                }
+            }
+        }
+    }
+
+    private static void AddVertices(float[] vertices, int caseNum, Vector3 offset,float isoLevel, List<Vector3> vert)
+    {
+        for (int i = 0; i < index[caseNum].Length; i++)
+        {
+            Vector3 pos = Vector3.zero;
+            if (index[caseNum][i] == 0) pos = GetPos(new Vector3(0,0,1) + offset, new Vector3(1,0,1) + offset, vertices[0], vertices[1], isoLevel);
+            if (index[caseNum][i] == 1) pos = GetPos(new Vector3(1,0,1) + offset, new Vector3(1,0,0) + offset, vertices[1], vertices[2], isoLevel);
+            if (index[caseNum][i] == 2) pos = GetPos(new Vector3(1,0,0) + offset, new Vector3(0,0,0) + offset, vertices[2], vertices[3], isoLevel);
+            if (index[caseNum][i] == 3) pos = GetPos(new Vector3(0,0,0) + offset, new Vector3(0,0,1) + offset, vertices[3], vertices[0], isoLevel);
+            if (index[caseNum][i] == 4) pos = GetPos(new Vector3(0,1,1) + offset, new Vector3(1,1,1) + offset, vertices[4], vertices[5], isoLevel);
+            if (index[caseNum][i] == 5) pos = GetPos(new Vector3(1,1,1) + offset, new Vector3(1,1,0) + offset, vertices[5], vertices[6], isoLevel);
+            if (index[caseNum][i] == 6) pos = GetPos(new Vector3(1,1,0) + offset, new Vector3(0,1,0) + offset, vertices[6], vertices[7], isoLevel);
+            if (index[caseNum][i] == 7) pos = GetPos(new Vector3(0,1,0) + offset, new Vector3(0,1,1) + offset, vertices[7], vertices[4], isoLevel);
+            if (index[caseNum][i] == 8) pos = GetPos(new Vector3(0,0,1) + offset, new Vector3(0,1,1) + offset, vertices[0], vertices[4], isoLevel);
+            if (index[caseNum][i] == 9) pos = GetPos(new Vector3(1,0,1) + offset, new Vector3(1,1,1) + offset, vertices[1], vertices[5], isoLevel);
+            if (index[caseNum][i] == 10) pos = GetPos(new Vector3(1,0,0) + offset, new Vector3(1,1,0) + offset, vertices[2], vertices[6], isoLevel);
+            if (index[caseNum][i] == 11) pos = GetPos(new Vector3(0,0,0) + offset, new Vector3(0,1,0) + offset, vertices[3], vertices[7], isoLevel);
+            pos.x /= 1.5f;
+            //pos /= 1.5f;
+            pos.z /= 1.5f;
+            vert.Add(pos);
+        }
+    }
+    private static int Threshold(float val, float isoLevel) => val > isoLevel ? 0 : 1;
+    private static Vector3 GetPos(Vector3 p1, Vector3 p2, float v1, float v2, float isoLevel) => p1 + (isoLevel - v1) * (p2 - p1) / (v2 - v1);
+
 
     private void OnDrawGizmos()
     {

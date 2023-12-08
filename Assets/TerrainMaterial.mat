@@ -110,6 +110,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: cbc70e813a06f4542ade7e0d25c7f586, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SampleTexture2D_de9ab7d6f00e4b5fb8230164fc7a826a_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 47b37c74a91ec304b9c9cb3003e84eef, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_fbb95cb67fb046e9aff5d4f59cff0510_Texture_1:
         m_Texture: {fileID: 2800000, guid: 3820dc7232681864db11416d979e4069, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -146,8 +150,20 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _Triplanar_0ac47b5b776e4001afc752dc6a2fe3bc_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 9b0ddd1f5befa7b438cd5858860d3d0d, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _Triplanar_51545b05390b4d5fbc7dffce098b9830_Texture_1:
         m_Texture: {fileID: 2800000, guid: cbc70e813a06f4542ade7e0d25c7f586, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Triplanar_d0dd02aaf50649c6ab39a651b8bcb053_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 825dd6a8ed88a514cacfc1337cb83a51, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Triplanar_e572bcaa0205484ba539a8630e6c8fe2_Texture_1:
+        m_Texture: {fileID: 2800000, guid: 3820dc7232681864db11416d979e4069, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Triplanar_f0c905e22172419ca266033eea7e2abc_Texture_1:
@@ -185,6 +201,7 @@ Material:
     - _Anisotropy: 0
     - _BlendMode: 0
     - _COLOR: 0
+    - _CaveHeight: 0
     - _CoatMask: 0
     - _ConservativeDepthOffsetEnable: 0
     - _CullMode: 2
@@ -229,6 +246,7 @@ Material:
     - _Metallic: 0
     - _MetallicRemapMax: 1
     - _MetallicRemapMin: 0
+    - _Mettalic: 0
     - _NormalMapSpace: 0
     - _NormalScale: 1
     - _OpaqueCullMode: 2
