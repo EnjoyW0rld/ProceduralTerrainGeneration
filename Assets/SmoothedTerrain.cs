@@ -7,20 +7,24 @@ public class SmoothedTerrain : MonoBehaviour
     [SerializeField] private int width, length, maxElevation, maxDepth;
     [SerializeField, Range(0f, 1f)] private float isoLevel;
     private float[,,] floatGrid;
+    const int SCALE = 3;
+    [SerializeField] private Texture2D tex;
     // Start is called before the first frame update
     void Start()
     {
+        width *= SCALE;
+        length *= SCALE;
         floatGrid = new float[width, maxDepth + maxElevation, length];
-        Texture2D tex = new Texture2D(width, length);
-        GenerateBiomesWithNoiseSmoothed(floatGrid, width, length, maxElevation, maxDepth, tex);
+        tex = new Texture2D(width, length);
         //Generating cave
         int[,,] grid = new int[width, maxDepth + maxElevation, length];
         CaveLTree.CreateCave(grid, new Vector3(width / 2, maxDepth + 2, length / 2), 10, 10, -2);
         Mesh caveMesh = MarchingCubes.GetMeshMarchingCubes(grid);
 
         //Surface creation
+        GenerateBiomesWithNoiseSmoothed(floatGrid, width, length, maxElevation, maxDepth, ref tex);
         Mesh mesh = GetSurcafeMesh();
-        
+
         //combining meshes
         CombineInstance[] meshes = CombineMeshes(mesh, caveMesh);
 
@@ -28,7 +32,16 @@ public class SmoothedTerrain : MonoBehaviour
         finalMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         finalMesh.CombineMeshes(meshes);
 
-        GetComponent<MeshFilter>().sharedMesh = finalMesh;
+        //mesh.uv = TerrainGenerator.BuildSurfaceUV(meshData.vertices, size, size);
+
+
+        GetComponent<MeshFilter>().sharedMesh = mesh;
+        //GetComponent<MeshFilter>().sharedMesh = finalMesh;
+
+        
+        MeshRenderer rend = GetComponent<MeshRenderer>();
+        rend.sharedMaterial.SetTexture("_Texture2D", tex);
+        rend.sharedMaterial.SetFloat("_CaveHeight", maxDepth - 1);
         //print(MarchingCubes.GetPos(new Vector3(1, 14, 1), new Vector3(1, 14, 2), 0.2f, 0.3f, 0.25f));
     }
 
@@ -39,6 +52,7 @@ public class SmoothedTerrain : MonoBehaviour
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = data.vertices.ToArray();
         mesh.triangles = data.faces.ToArray();
+        mesh.uv = BuildSurfaceUV(data.vertices, width, length);
         mesh.RecalculateNormals();
         return mesh;
     }
@@ -51,7 +65,7 @@ public class SmoothedTerrain : MonoBehaviour
         meshes[1].transform = transform.localToWorldMatrix;
         return meshes;
     }
-    private static void GenerateBiomesWithNoiseSmoothed(float[,,] grid, int width, int length, int maxElevation, int maxDepth, Texture2D tex = null)
+    private static void GenerateBiomesWithNoiseSmoothed(float[,,] grid, int width, int length, int maxElevation, int maxDepth, ref Texture2D tex)
     {
         BiomeManager biome = new BiomeManager(width, length);
         //int[,,] places = new int[width, maxDepth + maxElevation, length];
@@ -61,51 +75,53 @@ public class SmoothedTerrain : MonoBehaviour
 
         for (int x = 0; x < width; x++)
         {
-            float realX = x / scaleVal + randVal; //mapped X value
+            float realX = (x / (float)SCALE) / scaleVal + randVal; //mapped X value
             for (int z = 0; z < length; z++)
             {
-                float realZ = z / scaleVal + randVal; //mapped Z value
-                int biomeNum = biome.GetBiomeNum(new Vector3(x, 0, z));
+                float realZ = (z / (float)SCALE) / scaleVal + randVal; //mapped Z value
+                float biomeNum = biome.GetBiomeFloatNum(new Vector3(x, 0, z));
+                //print(biome.GetBiomeFloatNum(new Vector3(x, 0, z)));
                 float noiseValue;
                 if (biomeNum == 1)
                 {
                     noiseValue = Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(realX, realZ));
-                    if (tex != null) tex.SetPixel(x, z, new Color(0, 0, 0));
+                    //if (tex != null) tex.SetPixel(x, z, new Color(0, 0, 0));
+                }
+                else if (biomeNum == 0)
+                {
+                    noiseValue = Fbm.GetValue(realX, realZ, 6, 1);
+                    //if (tex != null) tex.SetPixel(x, z, new Color(1, 1, 1));
+
                 }
                 else
                 {
-                    noiseValue = Fbm.GetValue(realX, realZ, 6, 1);
-                    if (tex != null) tex.SetPixel(x, z, new Color(1, 1, 1));
-
+                    noiseValue = Mathf.Lerp(Fbm.GetValue(realX, realZ, 6, 1), Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(realX, realZ)), biomeNum);
                 }
+
                 for (int y = maxDepth; y < maxElevation + maxDepth; y++)
                 {
                     if (y == maxDepth + maxElevation - 1)
                     {
-                        grid[x, y, z] = 1;
-                        continue;
+                        //grid[x, y, z] = 1;
+                        //continue;
                     }
                     //(y-maxDepth) (maxElevation - 2)
-                    grid[x, y, z] = Mathf.Clamp01(((y - maxDepth) / ((float)maxElevation - 2) + noiseValue) / 2f);
-                    //grid[x, y, z] = ((y - maxDepth) / (float)maxElevation + noiseValue) / 2f;
-
-
-                    //grid[x, y, z] = y / (float)(maxElevation + maxDepth) + noiseValue;
-                    //print(y / (float)(maxElevation + maxDepth) - noiseValue);
+                    grid[x, y, z] = Mathf.Clamp01(((y - maxDepth) / ((float)maxElevation) + noiseValue) / 2f);
                 }
-                /*int mappedHeight = (int)Mathf.Lerp(maxDepth, maxElevation + maxDepth, noiseValue);
-                //tex.SetPixel(x, z, new Color(biomeNum / 10f, biomeNum / 10f, biomeNum / 10f));
-                for (int y = mappedHeight; y > maxDepth; y--)
-                {
-                    //grid[x, y, z] = 1;
-                    grid[x, y, z] = y / (float)mappedHeight;//Mathf.Lerp(1, 0, y / mappedHeight);
-                    print(y / (float)mappedHeight);
-                }
-                grid[x, mappedHeight, z] = 1;*/
             }
 
         }
-        tex.Apply();
+        tex = biome.GetTex();
+        //tex.Apply();
+    }
+    private static Vector2[] BuildSurfaceUV(List<Vector3> vert, float width, float length)
+    {
+        Vector2[] uv = new Vector2[vert.Count];
+        for (int i = 0; i < vert.Count; i++)
+        {
+            uv[i] = new Vector2(vert[i].x / width * SCALE, vert[i].z / length * SCALE);
+        }
+        return uv;
     }
     private void OnDrawGizmosSelected()
     {

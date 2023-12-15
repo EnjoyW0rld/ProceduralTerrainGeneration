@@ -517,9 +517,9 @@ public class MarchingCubes : MonoBehaviour
             if (index[caseNum][i] == 9) pos = GetPos(new Vector3(1,0,1) + offset, new Vector3(1,1,1) + offset, vertices[1], vertices[5], isoLevel);
             if (index[caseNum][i] == 10) pos = GetPos(new Vector3(1,0,0) + offset, new Vector3(1,1,0) + offset, vertices[2], vertices[6], isoLevel);
             if (index[caseNum][i] == 11) pos = GetPos(new Vector3(0,0,0) + offset, new Vector3(0,1,0) + offset, vertices[3], vertices[7], isoLevel);
-            pos.x /= 1.5f;
+            pos.x /= 3f;
             //pos /= 1.5f;
-            pos.z /= 1.5f;
+            pos.z /= 3f;
             vert.Add(pos);
         }
     }

@@ -17,6 +17,11 @@ public class VoronoiBiomeSampler
             points[i] = new Vector3(Random.Range(0, width), 0, Random.Range(0, length));
         }
     }
+    /// <summary>
+    /// Returns the number from 0 to the amount of sampled points
+    /// </summary>
+    /// <param name="sample"></param>
+    /// <returns></returns>
     public virtual int GetBiomeNum(Vector3 sample)
     {
         float dist = Vector3.Distance(sample, points[0]);
