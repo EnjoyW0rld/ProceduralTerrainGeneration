@@ -133,7 +133,7 @@ public class TerrainGenerator : MonoBehaviour
         }
         tex.Apply();
     }
-    private static void InvertGrid(int[,,] grid)
+    public static void InvertGrid(int[,,] grid)
     {
         for (int x = 0; x < grid.GetLength(0); x++)
         {
@@ -146,6 +146,20 @@ public class TerrainGenerator : MonoBehaviour
             }
         }
     }
+    public static void InvertGrid(float[,,] grid)
+    {
+        for (int x = 0; x < grid.GetLength(0); x++)
+        {
+            for (int y = 0; y < grid.GetLength(1); y++)
+            {
+                for (int z = 0; z < grid.GetLength(2); z++)
+                {
+                    grid[x, y, z] = grid[x, y, z] == 1 ? 0 : 1;
+                }
+            }
+        }
+    }
+
     private static void CopyToArray(int[,,] from, int[,,] to)
     {
         if (from.GetLength(0) > to.GetLength(0) || from.GetLength(1) > to.GetLength(1) || from.GetLength(2) > to.GetLength(2))

@@ -8,51 +8,77 @@ public class SmoothedTerrain : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float isoLevel;
     private float[,,] floatGrid;
     const int SCALE = 3;
+    const int ADDCEILING = 10;
     [SerializeField] private Texture2D tex;
     // Start is called before the first frame update
     void Start()
     {
         width *= SCALE;
         length *= SCALE;
-        floatGrid = new float[width, maxDepth + maxElevation, length];
+        floatGrid = new float[width, maxDepth + maxElevation + ADDCEILING, length];
         tex = new Texture2D(width, length);
+
         //Generating cave
         int[,,] grid = new int[width, maxDepth + maxElevation, length];
-        CaveLTree.CreateCave(grid, new Vector3(width / 2, maxDepth + 2, length / 2), 10, 10, -2);
-        Mesh caveMesh = MarchingCubes.GetMeshMarchingCubes(grid);
+        CaveLTree.CreateCave(floatGrid, new Vector3(width / 2, maxDepth - 1, length / 2), 30, 10, -.5f,2);
+        
 
         //Surface creation
         GenerateBiomesWithNoiseSmoothed(floatGrid, width, length, maxElevation, maxDepth, ref tex);
+        CaveLTree.DrawLine(floatGrid, new Vector3(width / 2  , maxDepth, length / 2 - 1), new Vector3(width / 2, maxDepth + maxElevation, length / 2));
         Mesh mesh = GetSurcafeMesh();
 
         //combining meshes
-        CombineInstance[] meshes = CombineMeshes(mesh, caveMesh);
+        //CombineInstance[] meshes = CombineMeshes(mesh, caveMesh);
 
         Mesh finalMesh = new Mesh();
         finalMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-        finalMesh.CombineMeshes(meshes);
-
-        //mesh.uv = TerrainGenerator.BuildSurfaceUV(meshData.vertices, size, size);
+        //finalMesh.CombineMeshes(meshes);
 
 
-        GetComponent<MeshFilter>().sharedMesh = mesh;
+        //GetComponent<MeshFilter>().sharedMesh = MarchingCubes.GetMeshMarchingCubes(caveGrid,isoLevel,1);
+        //GetComponent<MeshFilter>().sharedMesh = mesh;
+        GetComponent<MeshFilter>().sharedMesh = GenerateSurfaceAndCave();
         //GetComponent<MeshFilter>().sharedMesh = finalMesh;
 
-        
         MeshRenderer rend = GetComponent<MeshRenderer>();
         rend.sharedMaterial.SetTexture("_Texture2D", tex);
         rend.sharedMaterial.SetFloat("_CaveHeight", maxDepth - 1);
         //print(MarchingCubes.GetPos(new Vector3(1, 14, 1), new Vector3(1, 14, 2), 0.2f, 0.3f, 0.25f));
     }
 
+    private Mesh GenerateSurfaceAndCave()
+    {
+        List<Vector3> vertices = new List<Vector3>();
+        List<int> faces = new List<int>();
+        MarchingCubes.MarchAlgorithm(floatGrid, vertices, faces, isoLevel,
+            delegate (int x, int y, int z) {
+                if (y < maxDepth - 1) return SCALE;
+                else return SCALE;
+            });
+        Mesh mesh = new Mesh();
+        mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        mesh.vertices = vertices.ToArray();
+        mesh.triangles = faces.ToArray();
+        mesh.uv2 = BuildSurfaceUV(vertices, width, length);
+
+        mesh.RecalculateBounds();
+        mesh.RecalculateTangents();
+        mesh.RecalculateNormals();
+
+        return mesh;
+    }
     private Mesh GetSurcafeMesh()
     {
         Mesh mesh = new Mesh();
-        MeshData data = MarchingCubes.GetMeshMarchingCubesData(floatGrid, isoLevel);
+        MeshData data = MarchingCubes.GetMeshMarchingCubesData(floatGrid, isoLevel,SCALE);
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
         mesh.vertices = data.vertices.ToArray();
         mesh.triangles = data.faces.ToArray();
-        mesh.uv = BuildSurfaceUV(data.vertices, width, length);
+        //mesh.uv = BuildSurfaceUV(data.vertices, width, length);
+        mesh.uv2 = BuildSurfaceUV(data.vertices, width, length);
+        mesh.RecalculateBounds();
+        mesh.RecalculateTangents();
         mesh.RecalculateNormals();
         return mesh;
     }
@@ -98,7 +124,7 @@ public class SmoothedTerrain : MonoBehaviour
                     noiseValue = Mathf.Lerp(Fbm.GetValue(realX, realZ, 6, 1), Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(realX, realZ)), biomeNum);
                 }
 
-                for (int y = maxDepth; y < maxElevation + maxDepth; y++)
+                for (int y = maxDepth; y < maxElevation + maxDepth + ADDCEILING; y++)
                 {
                     if (y == maxDepth + maxElevation - 1)
                     {
@@ -122,21 +148,5 @@ public class SmoothedTerrain : MonoBehaviour
             uv[i] = new Vector2(vert[i].x / width * SCALE, vert[i].z / length * SCALE);
         }
         return uv;
-    }
-    private void OnDrawGizmosSelected()
-    {
-        if (floatGrid == null) return;
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = maxDepth - 1; y < floatGrid.GetLength(1); y++)
-            {
-                for (int z = 0; z < length; z++)
-                {
-                    if (floatGrid[x, y, z] > isoLevel) continue;
-                    Gizmos.color = new Color(floatGrid[x, y, z], floatGrid[x, y, z], floatGrid[x, y, z]);
-                    Gizmos.DrawCube(new Vector3(x, y, z), new Vector3(.2f, .2f, .2f));
-                }
-            }
-        }
     }
 }

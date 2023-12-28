@@ -5,7 +5,8 @@ using UnityEngine;
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class CaveLTree : MonoBehaviour
 {
-    private int[,,] grid;
+    private float[,,] grid;
+    private int[,,] intGrid;
     [SerializeField] private int[] poss;
     [SerializeField] private int maxDist;
 
@@ -17,31 +18,21 @@ public class CaveLTree : MonoBehaviour
 
     private void Start()
     {
-        grid = new int[60, 40, 60];
+        grid = new float[60, 40, 60];
+        intGrid = new int[60, 40, 60];
+
         LConnection conn = new LConnection(new Vector3(30, 30, 30), maxDist, 6, LConnection.State.A, new Vector3(0, -5, 0).normalized);
         startPos = new Vector3(30, 30, 30);
         conns = conn.StartCreation();
         //LConnection iter = conns[0];
-        ApplyLTreeToGrid(conns, grid);
-
-        GetComponent<MeshFilter>().mesh = MarchingCubes.GetMeshMarchingCubes(grid);
-    }
-    private static void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid, bool fillWithOne = true)
-    {
-        List<LConnection> built = new List<LConnection>();
-        for (int i = 0; i < conns.Count; i++)
-        {
-            LConnection currentConn = conns[i];
-            while (currentConn.previousConnection != null)
-            {
-                if (built.Contains(currentConn)) break;
-                DrawLine(grid, currentConn.currentPos, currentConn.previousConnection.currentPos,fillWithOne);
-                built.Add(currentConn);
-                currentConn = currentConn.previousConnection;
-            }
-        }
+        //ApplyLTreeToGrid(conns, grid);
+        TerrainGenerator.InvertGrid(grid);
+        DrawLine(grid, new Vector3(20, 20, 20), new Vector3(40, 20, 20), 1, false);
+        GetComponent<MeshFilter>().mesh = MarchingCubes.GetMeshMarchingCubes(grid, 0.289f, 1f);
+        //GetComponent<MeshFilter>().mesh = MarchingCubes.GetMeshMarchingCubes(intGrid);
     }
 
+    //Int grid DrawLine
     /// <summary>
     /// Add points to grid to form a line between two points
     /// </summary>
@@ -63,17 +54,75 @@ public class CaveLTree : MonoBehaviour
             Vector3Int rounded = new Vector3Int(pos1[0] + Mathf.RoundToInt((dir.x * i)),
                 pos1[1] + Mathf.RoundToInt((dir.y * i)),
                 pos1[2] + Mathf.RoundToInt((dir.z * i)));
-            SetPointsAround(width, rounded, grid,fillValue);
+            SetPointsAround(width, rounded, grid, fillValue);
             //grid[pos1[0] + Mathf.RoundToInt((dir.x * i)), pos1[1] + Mathf.RoundToInt((dir.y * i)), pos1[2] + Mathf.RoundToInt((dir.z * i))] = 1;
         }
     }
-    public static void DrawLine(int[,,] grid, Vector3 pos1, Vector3 pos2,bool fillWithOne = true) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z },fillWithOne);
+    public static void DrawLine(int[,,] grid, int[] pos1, int[] pos2, int width, bool fillWithOne = true)
+    {
+        int fillValue = fillWithOne ? 1 : 0;
+        //grid[pos1[0], pos1[1], pos1[2]] = 1;
+        //grid[pos2[0], pos2[1], pos2[2]] = 1;
+        Vector3 vpos1 = new Vector3(pos1[0], pos1[1], pos1[2]);
+        Vector3 vpos2 = new Vector3(pos2[0], pos2[1], pos2[2]);
+        Vector3 dir = (vpos2 - vpos1).normalized;
+        int steps = (int)Vector3.Distance(vpos1, vpos2);
+        for (int i = 0; i < steps; i++)
+        {
+            Vector3Int rounded = new Vector3Int(pos1[0] + Mathf.RoundToInt((dir.x * i)),
+                pos1[1] + Mathf.RoundToInt((dir.y * i)),
+                pos1[2] + Mathf.RoundToInt((dir.z * i)));
+            SetPointsAround(width, rounded, grid, fillValue);
+            //grid[pos1[0] + Mathf.RoundToInt((dir.x * i)), pos1[1] + Mathf.RoundToInt((dir.y * i)), pos1[2] + Mathf.RoundToInt((dir.z * i))] = 1;
+        }
+    }
+
+    public static void DrawLine(int[,,] grid, Vector3 pos1, Vector3 pos2, bool fillWithOne = true) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z }, fillWithOne);
+    public static void DrawLine(int[,,] grid, Vector3 pos1, Vector3 pos2, int width, bool fillWithOne = true) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z }, width, fillWithOne);
+    //Float grid DrawLine
+    public static void DrawLine(float[,,] grid, int[] pos1, int[] pos2, int width = 1, bool fillWithOne = true)
+    {
+        int fillValue = fillWithOne ? 1 : 0;
+        Vector3 vpos1 = new Vector3(pos1[0], pos1[1], pos1[2]);
+        Vector3 vpos2 = new Vector3(pos2[0], pos2[1], pos2[2]);
+        Vector3 dir = (vpos2 - vpos1).normalized;
+        int steps = (int)Vector3.Distance(vpos1, vpos2);
+        for (int i = 0; i < steps; i++)
+        {
+            Vector3Int rounded = new Vector3Int(pos1[0] + Mathf.RoundToInt((dir.x * i)),
+                pos1[1] + Mathf.RoundToInt((dir.y * i)),
+                pos1[2] + Mathf.RoundToInt((dir.z * i)));
+            SetPointsAround(width, rounded, grid, fillValue);
+            //grid[pos1[0] + Mathf.RoundToInt((dir.x * i)), pos1[1] + Mathf.RoundToInt((dir.y * i)), pos1[2] + Mathf.RoundToInt((dir.z * i))] = 1;
+        }
+    }
+    public static void DrawLine(float[,,] grid, Vector3 pos1, Vector3 pos2, int width = 1, bool fillWithOne = true) => DrawLine(grid, new int[] { (int)pos1.x, (int)pos1.y, (int)pos1.z }, new int[] { (int)pos2.x, (int)pos2.y, (int)pos2.z }, width, fillWithOne);
+    public static void CreateCave(int[,,] grid, Vector3 entryPos, int maxDist, int repetition, int verticalDir, bool fillWithOne = true)
+    {
+        LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, verticalDir, 0).normalized);
+        List<LConnection> conArr = init.StartCreation();
+        ApplyLTreeToGrid(conArr, grid, fillWithOne);
+    }
+    public static void CreateCave(float[,,] grid, Vector3 entryPos, int maxDist, int repetition, int verticalDir, bool fillWithOne = true)
+    {
+        LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, verticalDir, 0));
+        List<LConnection> conArr = init.StartCreation();
+        ApplyLTreeToGrid(conArr, grid, 1, fillWithOne);
+    }
+    public static void CreateCave(float[,,] grid, Vector3 entryPos, int maxDist, int repetition, float verticalDir, int width, bool fillWithOne = true)
+    {
+        LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, verticalDir, 0));
+        List<LConnection> conArr = init.StartCreation();
+        ApplyLTreeToGrid(conArr, grid, width, fillWithOne);
+    }
+
     /// <summary>
     /// Helper function for DrawLine func
     /// </summary>
     /// <param name="width"></param>
     /// <param name="pos"></param>
     /// <param name="grid"></param>
+    /// <param name="fillValue"></param>
     private static void SetPointsAround(int width, Vector3Int pos, int[,,] grid, int fillValue)
     {
         for (int x = pos.x - width; x < pos.x + width + 1; x++)
@@ -91,12 +140,55 @@ public class CaveLTree : MonoBehaviour
         }
     }
 
-    public static void CreateCave(int[,,] grid, Vector3 entryPos, int maxDist, int repetition, int verticalDir, bool fillWithOne = true)
+    private static void ApplyLTreeToGrid(List<LConnection> conns, float[,,] grid, int width, bool fillWithOne = true)
     {
-        LConnection init = new LConnection(entryPos, maxDist, repetition, LConnection.State.A, new Vector3(0, verticalDir, 0).normalized);
-        List<LConnection> conArr = init.StartCreation();
-        ApplyLTreeToGrid(conArr, grid,fillWithOne);
+        List<LConnection> built = new List<LConnection>();
+        for (int i = 0; i < conns.Count; i++)
+        {
+            LConnection currentConn = conns[i];
+            while (currentConn.previousConnection != null)
+            {
+                if (built.Contains(currentConn)) break;
+                DrawLine(grid, currentConn.currentPos, currentConn.previousConnection.currentPos, width, fillWithOne);
+                built.Add(currentConn);
+                currentConn = currentConn.previousConnection;
+            }
+        }
     }
+    private static void ApplyLTreeToGrid(List<LConnection> conns, int[,,] grid, bool fillWithOne = true)
+    {
+        List<LConnection> built = new List<LConnection>();
+        for (int i = 0; i < conns.Count; i++)
+        {
+            LConnection currentConn = conns[i];
+            while (currentConn.previousConnection != null)
+            {
+                if (built.Contains(currentConn)) break;
+                DrawLine(grid, currentConn.currentPos, currentConn.previousConnection.currentPos, fillWithOne);
+                built.Add(currentConn);
+                currentConn = currentConn.previousConnection;
+            }
+        }
+    }
+    private static void SetPointsAround(int width, Vector3Int pos, float[,,] grid, int fillValue)
+    {
+        for (int x = pos.x - width; x < pos.x + width + 1; x++)
+        {
+            if (x < 0 || x > grid.GetLength(0) - 1) continue;
+            for (int y = pos.y - width; y < pos.y + width + 1; y++)
+            {
+                if (y < 0 || y > grid.GetLength(1) - 1) continue;
+                for (int z = pos.z - width; z < pos.z + width + 1; z++)
+                {
+                    if (z < 0 || z > grid.GetLength(2) - 1) continue;
+                    grid[x, y, z] = .3f;// fillValue;
+                    //grid[x, y, pos.z + 1] = fillValue;
+                }
+            }
+        }
+    }
+
+
 
     //DEBUG
     private void DrawConnect(LConnection conn)
