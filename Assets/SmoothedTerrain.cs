@@ -20,7 +20,7 @@ public class SmoothedTerrain : MonoBehaviour
 
         //Generating cave
         int[,,] grid = new int[width, maxDepth + maxElevation, length];
-        CaveLTree.CreateCave(floatGrid, new Vector3(width / 2, maxDepth - 1, length / 2), 30, 10, -.5f,2);
+        CaveLTree.CreateCave(floatGrid, new Vector3(width / 2, maxDepth - 1, length / 2), 30, 10, -1f,2);
         
 
         //Surface creation
@@ -53,8 +53,8 @@ public class SmoothedTerrain : MonoBehaviour
         List<int> faces = new List<int>();
         MarchingCubes.MarchAlgorithm(floatGrid, vertices, faces, isoLevel,
             delegate (int x, int y, int z) {
-                if (y < maxDepth - 1) return SCALE;
-                else return SCALE;
+                if (y < maxDepth - 1) return new Vector3(SCALE,SCALE,SCALE);
+                else return new Vector3(SCALE,1,SCALE);
             });
         Mesh mesh = new Mesh();
         mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;

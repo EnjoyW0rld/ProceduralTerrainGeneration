@@ -473,7 +473,7 @@ public class MarchingCubes : MonoBehaviour
         MeshData data = new MeshData(vertices,faces);
         return data;
     }
-    public static void MarchAlgorithm(float[,,] values, List<Vector3> vertices, List<int> faces, float isoLevel, System.Func<int,int,int,float> scaleValue)
+    public static void MarchAlgorithm(float[,,] values, List<Vector3> vertices, List<int> faces, float isoLevel, System.Func<int,int,int,Vector3> scaleValue)
     {
         Dictionary<Vector3, int> vertexInd = new Dictionary<Vector3, int>(); //FOr case with shared vertices
         for (int x = 0; x < values.GetLength(0) - 1; x++)
@@ -528,30 +528,8 @@ public class MarchingCubes : MonoBehaviour
             }
         }
     }
-    private static void AddVertices(float[] vertices, int caseNum, Vector3 offset,float isoLevel, List<Vector3> vert, float scaleValue)
-    {
-        for (int i = 0; i < index[caseNum].Length; i++)
-        {
-            Vector3 pos = Vector3.zero;
-            if (index[caseNum][i] == 0) pos = GetPos(new Vector3(0,0,1) + offset, new Vector3(1,0,1) + offset, vertices[0], vertices[1], isoLevel);
-            if (index[caseNum][i] == 1) pos = GetPos(new Vector3(1,0,1) + offset, new Vector3(1,0,0) + offset, vertices[1], vertices[2], isoLevel);
-            if (index[caseNum][i] == 2) pos = GetPos(new Vector3(1,0,0) + offset, new Vector3(0,0,0) + offset, vertices[2], vertices[3], isoLevel);
-            if (index[caseNum][i] == 3) pos = GetPos(new Vector3(0,0,0) + offset, new Vector3(0,0,1) + offset, vertices[3], vertices[0], isoLevel);
-            if (index[caseNum][i] == 4) pos = GetPos(new Vector3(0,1,1) + offset, new Vector3(1,1,1) + offset, vertices[4], vertices[5], isoLevel);
-            if (index[caseNum][i] == 5) pos = GetPos(new Vector3(1,1,1) + offset, new Vector3(1,1,0) + offset, vertices[5], vertices[6], isoLevel);
-            if (index[caseNum][i] == 6) pos = GetPos(new Vector3(1,1,0) + offset, new Vector3(0,1,0) + offset, vertices[6], vertices[7], isoLevel);
-            if (index[caseNum][i] == 7) pos = GetPos(new Vector3(0,1,0) + offset, new Vector3(0,1,1) + offset, vertices[7], vertices[4], isoLevel);
-            if (index[caseNum][i] == 8) pos = GetPos(new Vector3(0,0,1) + offset, new Vector3(0,1,1) + offset, vertices[0], vertices[4], isoLevel);
-            if (index[caseNum][i] == 9) pos = GetPos(new Vector3(1,0,1) + offset, new Vector3(1,1,1) + offset, vertices[1], vertices[5], isoLevel);
-            if (index[caseNum][i] == 10) pos = GetPos(new Vector3(1,0,0) + offset, new Vector3(1,1,0) + offset, vertices[2], vertices[6], isoLevel);
-            if (index[caseNum][i] == 11) pos = GetPos(new Vector3(0,0,0) + offset, new Vector3(0,1,0) + offset, vertices[3], vertices[7], isoLevel);
-            pos.x /= scaleValue;
-            //pos.y /= scaleValue;
-            pos.z /= scaleValue;
-            //pos+= new Vector3(scaleValue - 1,0,scaleValue - 1);
-            vert.Add(pos);
-        }
-    }
+    private static void AddVertices(float[] vertices, int caseNum, Vector3 offset,float isoLevel, List<Vector3> vert, float scaleValue) => AddVertices(vertices,caseNum,offset,isoLevel,vert,new Vector3(scaleValue,0,scaleValue));
+    
     private static void AddVertices(float[] vertices, int caseNum, Vector3 offset, float isoLevel, List<Vector3> vert, Vector3 scaleValue)
     {
         for (int i = 0; i < index[caseNum].Length; i++)
@@ -572,7 +550,7 @@ public class MarchingCubes : MonoBehaviour
             pos.x /= scaleValue.x;
             pos.y /= scaleValue.y;
             pos.z /= scaleValue.z;
-            //pos+= new Vector3(scaleValue - 1,0,scaleValue - 1);
+            pos+= new Vector3(0,(scaleValue.y *33) - 33,0);
             vert.Add(pos);
         }
     }
