@@ -100,11 +100,11 @@ public class Fbm
                     float octVal = amp * Mathf.PerlinNoise(x / (float)tex.width * upScaleNoise * (i * 2), y / (float)tex.height * upScaleNoise * (i * 2));
 
                     val += octVal;
-                    cols[i % 3] += octVal; 
+                    cols[i % 3] += octVal;
 
                     amp *= .5f;
                 }
-                tex.SetPixel(x, y, 
+                tex.SetPixel(x, y,
                     new Color(val, val, val)
                     //new Color(3*cols[0], 3*cols[1], 3*cols[2])
                     );
@@ -120,11 +120,27 @@ public class Fbm
         float amp = .5f;
         for (int i = 0; i < octaves; i++)
         {
-            val += amp * Mathf.PerlinNoise(x * scale * (i * 2), y * scale * (i * 2));
-            amp *= .5f;
+            //val += amp * Mathf.PerlinNoise(x * scale * (i * 2), y * scale * (i * 2));
+            val += amp * Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(x * scale * (i * 2), y * scale * (i * 2)));
+            amp *= .2f;
         }
         return val;
     }
+    [System.Obsolete]
+    public static float GetValueMathfNoise(float x, float y, int octaves, float scale)
+    {
+        float val = 0;
+        float amp = .5f;
+        for (int i = 0; i < octaves; i++)
+        {
+            val += amp * Mathf.PerlinNoise(x * scale * (i * 2), y * scale * (i * 2));
+            //val += amp * Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(x * scale * (i * 2), y * scale * (i * 2)));
+            amp *= .5f;
+        }
+        if (val < 0 || val > 1) Debug.Log("AA");
+        return val;
+    }
+
 }
 [System.Serializable]
 internal class PerlinNoise

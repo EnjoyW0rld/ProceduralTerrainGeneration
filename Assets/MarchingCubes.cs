@@ -550,7 +550,8 @@ public class MarchingCubes : MonoBehaviour
             pos.x /= scaleValue.x;
             pos.y /= scaleValue.y;
             pos.z /= scaleValue.z;
-            pos+= new Vector3(0,(scaleValue.y *33) - 33,0);
+            //pos+= new Vector3(0,(scaleValue.y *33) - 33,0);
+            pos += new Vector3(0, (scaleValue.y - 1) * 33, 0);
             vert.Add(pos);
         }
     }
