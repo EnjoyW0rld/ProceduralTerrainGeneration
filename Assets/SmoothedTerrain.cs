@@ -44,9 +44,7 @@ public class SmoothedTerrain : MonoBehaviour
         rend.sharedMaterial.SetFloat("_CaveHeight", maxDepth - 1);
 
         GetComponent<MeshCollider>().sharedMesh = finalMesh;
-        Stopwatch w = new Stopwatch();
         PropsPlacer.PlaceObjects(bushPrefabDesert,bushPrefabGreen, tex, 300,transform);
-        w.print("placed");
         //print(MarchingCubes.GetPos(new Vector3(1, 14, 1), new Vector3(1, 14, 2), 0.2f, 0.3f, 0.25f));
     }
 
