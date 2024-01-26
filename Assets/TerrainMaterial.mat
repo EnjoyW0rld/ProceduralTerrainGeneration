@@ -151,7 +151,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Triplanar_0ac47b5b776e4001afc752dc6a2fe3bc_Texture_1:
-        m_Texture: {fileID: 2800000, guid: 9b0ddd1f5befa7b438cd5858860d3d0d, type: 3}
+        m_Texture: {fileID: 2800000, guid: cbc70e813a06f4542ade7e0d25c7f586, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _Triplanar_51545b05390b4d5fbc7dffce098b9830_Texture_1:
