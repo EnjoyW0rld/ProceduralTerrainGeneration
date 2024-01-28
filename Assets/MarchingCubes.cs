@@ -2,10 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// General class for generating mesh using marching cubes algorithm
+/// reads data from int and float grids
+/// </summary>
 [RequireComponent(typeof(MeshRenderer))]
 public class MarchingCubes : MonoBehaviour
 {
-    [SerializeField] private int tryCase;
     private static readonly List<int[]> index = new List<int[]>() {
   new int[]{},
   new int[]{0, 8, 3},
@@ -265,53 +268,9 @@ public class MarchingCubes : MonoBehaviour
   new int[]{}
 };
 
-    private int[,,] p;
-
-    private void Start()
-    {
-        MeshFilter rend = GetComponent<MeshFilter>();
-        Mesh mesh = new Mesh();
-
-        float f = System.DateTime.Now.Second / 4.3f;
-        int val = 10;
-        int[,,] test = new int[10, 10, 10];
-
-        for (int x = 0; x < val; x++)
-        {
-            float realX = x / (float)val;
-            for (int y = 0; y < val; y++)
-            {
-                float realY = y / (float)val;
-                for (int z = 0; z < val; z++)
-                {
-                    float realZ = z / (float)val;
-                    //float n = Perlin3D.GetPerlin3D(new Vector3(realX, realY, realZ));
-                    float n = 1 - Unity.Mathematics.noise.cellular2x2x2(new Unity.Mathematics.float3(realX, realY, realZ)).x;
-                    if (n > .5f)
-                    {
-                        test[x, y, z] = 1;
-                    }
-                    else test[x, y, z] = 0;
-                }
-            }
-        }
-
-        int[,,] arr = new int[,,]
-        {
-            {{0,0,0,0 },{0,0,0,1 },{0,0,0,0 },{0,0,0,0 } },
-            {{0,0,0,0 },{1,0,1,0 },{0,0,0,0 },{1,0,0,0 } },
-            {{0,0,1,0 },{0,0,1,0 },{0,0,0,0 },{0,0,1,0 } },
-            {{0,0,0,0 },{0,1,0,0 },{0,0,1,0 },{0,0,0,0 } }
-        };
-        p = test;
-        mesh = GetMeshMarchingCubes(test);
-        rend.mesh = mesh;
-    }
-
-    //STATIC FUNCTIONS
-
+    //----------------------------
     //int grid functions
-
+    //----------------------------
     private static Vector3 GetPos(int num, Vector3 offset)
     {
         Vector3 pos = Vector3.zero;
@@ -400,24 +359,6 @@ public class MarchingCubes : MonoBehaviour
 
         return new MeshData(vertices, faces);
     }
-    private static void AddTries(int ind, List<int> tries, Vector3 offset, Dictionary<Vector3, int> vertexInd)
-    {
-        /*int triCount = index[ind].Length / 3;
-        for (int i = 0; i < triCount; i++)
-        {
-
-            int startInd = tries.Count;
-            tries.Add(startInd);
-            tries.Add(startInd + 1);
-            tries.Add(startInd + 2);
-        }*/
-        for (int i = 0; i < index[ind].Length; i++)
-        {
-            Vector3 pos = GetPos(index[ind][i], offset);
-            tries.Add(vertexInd[pos]);
-        }
-    }
-    //Function with no shared vertices
     private static void AddTries(int ind, List<int> tries)
     {
         int triCount = index[ind].Length / 3;
@@ -429,6 +370,28 @@ public class MarchingCubes : MonoBehaviour
             tries.Add(startInd + 2);
         }
     }
+    /// <summary>
+    /// Add indices with shared vertices
+    /// </summary>
+    /// <param name="ind"></param>
+    /// <param name="tries"></param>
+    /// <param name="offset"></param>
+    /// <param name="vertexInd"></param>
+    private static void AddTries(int ind, List<int> tries, Vector3 offset, Dictionary<Vector3, int> vertexInd)
+    {
+        for (int i = 0; i < index[ind].Length; i++)
+        {
+            Vector3 pos = GetPos(index[ind][i], offset);
+            tries.Add(vertexInd[pos]);
+        }
+    }
+    /// <summary>
+    /// Add vertices making them shared
+    /// </summary>
+    /// <param name="ind"></param>
+    /// <param name="offset"></param>
+    /// <param name="vec"></param>
+    /// <param name="vertexInd"></param>
     private static void AddVertices(int ind, Vector3 offset, List<Vector3> vec, Dictionary<Vector3, int> vertexInd)
     {
         for (int i = 0; i < index[ind].Length; i++)
@@ -442,22 +405,22 @@ public class MarchingCubes : MonoBehaviour
             vertexInd.Add(pos, vec.Count - 1);
         }
     }
-    //Function with no shared vertices
-    private static void AddVertices(int ind, Vector3 offset, List<Vector3> vec)
-    {
-        for (int i = 0; i < index[ind].Length; i++)
-        {
-            vec.Add(GetPos(index[ind][i], offset));
-        }
-    }
-
+    //----------------------------
     //float grid functions
+    //----------------------------
+    /// <summary>
+    /// General marching cubes algorithm
+    /// </summary>
+    /// <param name="grid"></param>
+    /// <param name="isoLevel">Threshold value</param>
+    /// <param name="scaleValue">Value grid was upscaled with</param>
+    /// <returns></returns>
     public static Mesh GetMeshMarchingCubes(float[,,] grid, float isoLevel, float scaleValue)
     {
         Mesh mesh = new Mesh();
         List<Vector3> vertices = new List<Vector3>();
         List<int> faces = new List<int>();
-        MarchAlgorithm(grid,vertices,faces,isoLevel,scaleValue);
+        MarchAlgorithm(grid, vertices, faces, isoLevel, scaleValue);
         mesh.vertices = vertices.ToArray();
         mesh.triangles = faces.ToArray();
         mesh.RecalculateBounds();
@@ -465,17 +428,24 @@ public class MarchingCubes : MonoBehaviour
         mesh.RecalculateTangents();
         return mesh;
     }
-    public static MeshData GetMeshMarchingCubesData(float[,,] grid, float isoLevel,float scaleValue)
+    public static MeshData GetMeshMarchingCubesData(float[,,] grid, float isoLevel, float scaleValue)
     {
         List<Vector3> vertices = new List<Vector3>();
         List<int> faces = new List<int>();
-        MarchAlgorithm(grid, vertices, faces, isoLevel,scaleValue);
-        MeshData data = new MeshData(vertices,faces);
+        MarchAlgorithm(grid, vertices, faces, isoLevel, scaleValue);
+        MeshData data = new MeshData(vertices, faces);
         return data;
     }
-    public static void MarchAlgorithm(float[,,] values, List<Vector3> vertices, List<int> faces, float isoLevel, System.Func<int,int,int,Vector3> scaleValue)
+    /// <summary>
+    /// Algorithm with anonymous function to change scale based on position of the vertex
+    /// </summary>
+    /// <param name="values"></param>
+    /// <param name="vertices"></param>
+    /// <param name="faces"></param>
+    /// <param name="isoLevel"></param>
+    /// <param name="scaleValue"></param>
+    public static void MarchAlgorithm(float[,,] values, List<Vector3> vertices, List<int> faces, float isoLevel, int heightThreshold, System.Func<int, int, int, Vector3> scaleValue)
     {
-        Dictionary<Vector3, int> vertexInd = new Dictionary<Vector3, int>(); //FOr case with shared vertices
         for (int x = 0; x < values.GetLength(0) - 1; x++)
         {
             int nextX = x + 1 == values.GetLength(0) ? 0 : x + 1;
@@ -492,7 +462,7 @@ public class MarchingCubes : MonoBehaviour
                     int currCase = GetCase(corn);
                     float[] cell = new float[] { values[x, y, nextZ], values[nextX, y, nextZ], values[nextX, y, z], values[x, y, z],
                     values[x, nextY, nextZ], values[nextX, nextY, nextZ], values[nextX, nextY, z], values[x, nextY, z]};
-                    AddVertices(cell, currCase, new Vector3(x, y, z), isoLevel, vertices, scaleValue(x,y,z));
+                    AddVertices(cell, currCase, new Vector3(x, y, z), isoLevel, vertices, scaleValue(x, y, z), heightThreshold);
                     //AddVertices(currCase, new Vector3(x, y, z), vertices, vertexInd);
                     AddTries(currCase, faces);
 
@@ -500,10 +470,16 @@ public class MarchingCubes : MonoBehaviour
             }
         }
     }
-
+    /// <summary>
+    /// Generates lists of vertices and indices from the passed grid
+    /// </summary>
+    /// <param name="values"></param>
+    /// <param name="vertices"></param>
+    /// <param name="faces"></param>
+    /// <param name="isoLevel"></param>
+    /// <param name="scaleValue"></param>
     private static void MarchAlgorithm(float[,,] values, List<Vector3> vertices, List<int> faces, float isoLevel, float scaleValue)
     {
-        Dictionary<Vector3, int> vertexInd = new Dictionary<Vector3, int>(); //FOr case with shared vertices
         for (int x = 0; x < values.GetLength(0) - 1; x++)
         {
             int nextX = x + 1 == values.GetLength(0) ? 0 : x + 1;
@@ -520,61 +496,59 @@ public class MarchingCubes : MonoBehaviour
                     int currCase = GetCase(corn);
                     float[] cell = new float[] { values[x, y, nextZ], values[nextX, y, nextZ], values[nextX, y, z], values[x, y, z],
                     values[x, nextY, nextZ], values[nextX, nextY, nextZ], values[nextX, nextY, z], values[x, nextY, z]};
-                    AddVertices(cell, currCase, new Vector3(x,y,z),isoLevel,vertices,scaleValue);
-                    //AddVertices(currCase, new Vector3(x, y, z), vertices, vertexInd);
+                    AddVertices(cell, currCase, new Vector3(x, y, z), isoLevel, vertices, scaleValue);
                     AddTries(currCase, faces);
 
                 }
             }
         }
     }
-    private static void AddVertices(float[] vertices, int caseNum, Vector3 offset,float isoLevel, List<Vector3> vert, float scaleValue) => AddVertices(vertices,caseNum,offset,isoLevel,vert,new Vector3(scaleValue,0,scaleValue));
-    
-    private static void AddVertices(float[] vertices, int caseNum, Vector3 offset, float isoLevel, List<Vector3> vert, Vector3 scaleValue)
+    private static void AddVertices(float[] vertices, int caseNum, Vector3 offset, float isoLevel, List<Vector3> vert, float scaleValue) => AddVertices(vertices, caseNum, offset, isoLevel, vert, new Vector3(scaleValue, 0, scaleValue));
+    /// <summary>
+    /// Adds vertices to array based on values in the grid
+    /// </summary>
+    /// <param name="vertices"></param>
+    /// <param name="caseNum"></param>
+    /// <param name="offset"></param>
+    /// <param name="isoLevel"></param>
+    /// <param name="vert"></param>
+    /// <param name="scaleValue"></param>
+    private static void AddVertices(float[] vertices, int caseNum, Vector3 offset, float isoLevel, List<Vector3> vert, Vector3 scaleValue, int heightThreshold = 0)
     {
         for (int i = 0; i < index[caseNum].Length; i++)
         {
             Vector3 pos = Vector3.zero;
             if (index[caseNum][i] == 0) pos = GetPos(new Vector3(0, 0, 1) + offset, new Vector3(1, 0, 1) + offset, vertices[0], vertices[1], isoLevel);
-            if (index[caseNum][i] == 1) pos = GetPos(new Vector3(1, 0, 1) + offset, new Vector3(1, 0, 0) + offset, vertices[1], vertices[2], isoLevel);
-            if (index[caseNum][i] == 2) pos = GetPos(new Vector3(1, 0, 0) + offset, new Vector3(0, 0, 0) + offset, vertices[2], vertices[3], isoLevel);
-            if (index[caseNum][i] == 3) pos = GetPos(new Vector3(0, 0, 0) + offset, new Vector3(0, 0, 1) + offset, vertices[3], vertices[0], isoLevel);
-            if (index[caseNum][i] == 4) pos = GetPos(new Vector3(0, 1, 1) + offset, new Vector3(1, 1, 1) + offset, vertices[4], vertices[5], isoLevel);
-            if (index[caseNum][i] == 5) pos = GetPos(new Vector3(1, 1, 1) + offset, new Vector3(1, 1, 0) + offset, vertices[5], vertices[6], isoLevel);
-            if (index[caseNum][i] == 6) pos = GetPos(new Vector3(1, 1, 0) + offset, new Vector3(0, 1, 0) + offset, vertices[6], vertices[7], isoLevel);
-            if (index[caseNum][i] == 7) pos = GetPos(new Vector3(0, 1, 0) + offset, new Vector3(0, 1, 1) + offset, vertices[7], vertices[4], isoLevel);
-            if (index[caseNum][i] == 8) pos = GetPos(new Vector3(0, 0, 1) + offset, new Vector3(0, 1, 1) + offset, vertices[0], vertices[4], isoLevel);
-            if (index[caseNum][i] == 9) pos = GetPos(new Vector3(1, 0, 1) + offset, new Vector3(1, 1, 1) + offset, vertices[1], vertices[5], isoLevel);
-            if (index[caseNum][i] == 10) pos = GetPos(new Vector3(1, 0, 0) + offset, new Vector3(1, 1, 0) + offset, vertices[2], vertices[6], isoLevel);
-            if (index[caseNum][i] == 11) pos = GetPos(new Vector3(0, 0, 0) + offset, new Vector3(0, 1, 0) + offset, vertices[3], vertices[7], isoLevel);
+            else if (index[caseNum][i] == 1) pos = GetPos(new Vector3(1, 0, 1) + offset, new Vector3(1, 0, 0) + offset, vertices[1], vertices[2], isoLevel);
+            else if (index[caseNum][i] == 2) pos = GetPos(new Vector3(1, 0, 0) + offset, new Vector3(0, 0, 0) + offset, vertices[2], vertices[3], isoLevel);
+            else if (index[caseNum][i] == 3) pos = GetPos(new Vector3(0, 0, 0) + offset, new Vector3(0, 0, 1) + offset, vertices[3], vertices[0], isoLevel);
+            else if (index[caseNum][i] == 4) pos = GetPos(new Vector3(0, 1, 1) + offset, new Vector3(1, 1, 1) + offset, vertices[4], vertices[5], isoLevel);
+            else if (index[caseNum][i] == 5) pos = GetPos(new Vector3(1, 1, 1) + offset, new Vector3(1, 1, 0) + offset, vertices[5], vertices[6], isoLevel);
+            else if (index[caseNum][i] == 6) pos = GetPos(new Vector3(1, 1, 0) + offset, new Vector3(0, 1, 0) + offset, vertices[6], vertices[7], isoLevel);
+            else if (index[caseNum][i] == 7) pos = GetPos(new Vector3(0, 1, 0) + offset, new Vector3(0, 1, 1) + offset, vertices[7], vertices[4], isoLevel);
+            else if (index[caseNum][i] == 8) pos = GetPos(new Vector3(0, 0, 1) + offset, new Vector3(0, 1, 1) + offset, vertices[0], vertices[4], isoLevel);
+            else if (index[caseNum][i] == 9) pos = GetPos(new Vector3(1, 0, 1) + offset, new Vector3(1, 1, 1) + offset, vertices[1], vertices[5], isoLevel);
+            else if (index[caseNum][i] == 10) pos = GetPos(new Vector3(1, 0, 0) + offset, new Vector3(1, 1, 0) + offset, vertices[2], vertices[6], isoLevel);
+            else if (index[caseNum][i] == 11) pos = GetPos(new Vector3(0, 0, 0) + offset, new Vector3(0, 1, 0) + offset, vertices[3], vertices[7], isoLevel);
             pos.x /= scaleValue.x;
             pos.y /= scaleValue.y;
             pos.z /= scaleValue.z;
-            //pos+= new Vector3(0,(scaleValue.y *33) - 33,0);
-            pos += new Vector3(0, (scaleValue.y - 1) * 33, 0);
+            if (heightThreshold != 0)
+            {
+                //pos += new Vector3(0, (scaleValue.y - 1) * 11 * scaleValue.y, 0);
+                pos += new Vector3(0, (scaleValue.y - 1) * heightThreshold / scaleValue.y, 0);
+            }
             vert.Add(pos);
         }
     }
-
+    /// <summary>
+    /// Determines if point should be on or off
+    /// </summary>
+    /// <param name="val"></param>
+    /// <param name="isoLevel"></param>
+    /// <returns>Value 0 or 1</returns>
     private static int Threshold(float val, float isoLevel) => val > isoLevel ? 0 : 1;
     private static Vector3 GetPos(Vector3 p1, Vector3 p2, float v1, float v2, float isoLevel) => p1 + (isoLevel - v1) * (p2 - p1) / (v2 - v1);
-
-
-    private void OnDrawGizmos()
-    {
-        if (p == null) return;
-        for (int x = 0; x < p.GetLength(0); x++)
-        {
-            for (int y = 0; y < p.GetLength(1); y++)
-            {
-                for (int z = 0; z < p.GetLength(2); z++)
-                {
-                    UnityEditor.Handles.Label(new Vector3(x, y, z), p[x, y, z] + "");
-                }
-            }
-        }
-    }
-
 }
 
 public class MeshData

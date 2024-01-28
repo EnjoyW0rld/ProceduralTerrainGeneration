@@ -192,8 +192,8 @@ float clamp01(float val) {
 [numthreads(10, 1, 10)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
-	float realX = (id.x / (float)3.0f) / 10.0f;
-	float realZ = (id.z / (float)3.0f) / 10.0f;
+	float realX = (id.x / (float)1.0f) / 10.0f;
+	float realZ = (id.z / (float)1.0f) / 10.0f;
 	//float noiseVal = biomes[id.xz] * cnoise(float2(realX, realZ)) + (1 - biomes[id.xz]) * FBM(realX, realZ, 6, 1);
 	//float noiseVal = FBM(realX, realZ, 6, 1);
 	float noiseVal = biomes[id.xz] * cnoiseNew(float2(realX, realZ)) + (1 - biomes[id.xz]) * FBM(realX, realZ, 6, 1);

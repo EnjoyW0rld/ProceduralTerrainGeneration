@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class PropsPlacer : MonoBehaviour
 {
+    /// <summary>
+    /// Randomly place object on a mesh
+    /// </summary>
+    /// <param name="desertPrefab">Prefab to be used in desert biome</param>
+    /// <param name="greenPrefab">Prefab to be used in green biome</param>
+    /// <param name="tex">Texture to sample biomes from</param>
+    /// <param name="count">Amount of props to be placed</param>
+    /// <param name="parent">Parent game object for props</param>
     public static void PlaceObjects(GameObject desertPrefab, GameObject greenPrefab, Texture2D tex, int count, Transform parent)
     {
         for (int i = 0; i < count; i++)
