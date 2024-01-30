@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 2177.998, g: 2303.2266, b: 3400.746, a: 1}
+  m_IndirectSpecularColor: {r: 2160.0078, g: 2263.7617, b: 3286.5664, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -421,12 +421,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca3959929d404c640ade080dd39623b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  width: 200
-  length: 200
+  width: 300
+  length: 300
   maxElevation: 20
   maxDepth: 100
   isoLevel: 0.289
-  tex: {fileID: 0}
   shader: {fileID: 7200000, guid: e7b5e62acdff8554d8667bdf6232375a, type: 3}
   bushPrefabDesert: {fileID: 714033836917785936, guid: 6018f7ab195678c43bd33ec50a9d3f88,
     type: 3}

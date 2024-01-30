@@ -8,6 +8,7 @@ Texture2D biomes;
 float maxDepth;
 float maxElevation;
 float3 gridSize;
+float3 offset;
 
 float4 mod289(float4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
 float3 mod289(float3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -192,23 +193,32 @@ float clamp01(float val) {
 [numthreads(10, 1, 10)]
 void CSMain(uint3 id : SV_DispatchThreadID)
 {
+	float realX = ((id.x + offset.x) / (float)1.0f) / 10.0f;
+	float realZ = ((id.z + offset.z) / (float)1.0f) / 10.0f;
+	float4 biomeVal = biomes[float2(id.x + offset.x,id.z + offset.z)];
+	float noiseVal = biomeVal * cnoiseNew(float2(realX, realZ)) + (1 - biomeVal) * FBM(realX, realZ, 6, 1);
+	for (int y = 0; y < maxDepth; y++)
+	{
+		float realY = (y / (float)1.0f) / 10.0f;
+		grid[id.x + 100 * y + 100 * gridSize.y * id.z] = cnoise3D(float3(realX, realY, realZ)) - .5f;
+	}
+	for (int y = maxDepth; y < maxElevation + maxDepth + 10; y++)
+	{
+		grid[id.x + 100 * y + 100 * gridSize.y * id.z] = clamp01(((y - maxDepth) / (float)maxElevation + noiseVal));
+	}
+/*
+	return;
 	float realX = (id.x / (float)1.0f) / 10.0f;
 	float realZ = (id.z / (float)1.0f) / 10.0f;
-	//float noiseVal = biomes[id.xz] * cnoise(float2(realX, realZ)) + (1 - biomes[id.xz]) * FBM(realX, realZ, 6, 1);
-	//float noiseVal = FBM(realX, realZ, 6, 1);
 	float noiseVal = biomes[id.xz] * cnoiseNew(float2(realX, realZ)) + (1 - biomes[id.xz]) * FBM(realX, realZ, 6, 1);
 	for (int y = 0; y < maxDepth; y++)
 	{
 		float realY = (y / (float)3.0f) / 10.0f;
 		grid[id.x + gridSize.x * y + gridSize.x * gridSize.y * id.z] = cnoise3D(float3(realX, realY, realZ)) - .5f;
 	}
-	//float noiseVal = cnoiseNew(float2(realX, realZ));
 	for (int y = maxDepth; y < maxElevation + maxDepth + 10; y++)
 	{
-
-		//grid[id.x + gridSize.x * y + gridSize.x * gridSize.y * id.z] = ((y - maxDepth) / ((float)maxElevation + noiseVal)) / 2.0;
-		//grid[id.x + gridSize.x * y + gridSize.x * gridSize.y * id.z] = (y - maxDepth) / (maxElevation + (noiseVal * 2);//clamp(((y - maxDepth) / ((float)maxElevation + noiseVal)) / 2.0, 0, 1);
 		grid[id.x + gridSize.x * y + gridSize.x * gridSize.y * id.z] = clamp01(((y - maxDepth) / (float)maxElevation + noiseVal));
-
 	}
+*/
 }

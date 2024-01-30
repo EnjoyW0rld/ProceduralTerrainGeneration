@@ -44,7 +44,7 @@ public class HideIfEditor : PropertyDrawer
                     return CompareEnum(target.enumValueFlag, (int)comparer, compareType);
             }
         }
-        catch (Exception e)
+        catch (Exception)
         {
             Debug.LogError("Types of two variables are not the same");
         }
