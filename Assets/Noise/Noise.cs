@@ -2,69 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Renderer))]
-public class Noise : MonoBehaviour
-{
-    private Renderer rend;
-    [SerializeField] private int scale;
-    [SerializeField] private float tempNum;
-    enum NoiseType { Fbm, Perlin, Worley, TestCase }
-    [SerializeField] private NoiseType noiseType;
-
-    [SerializeField, HideIf("noiseType", NoiseType.Fbm, HideIfAttribute.Comparison.NotEquals)] private Fbm fbm;
-    [SerializeField, HideIf("noiseType", NoiseType.Perlin, HideIfAttribute.Comparison.NotEquals)] private PerlinNoise perlinNoise;
-    [SerializeField, HideIf("noiseType", NoiseType.Worley, HideIfAttribute.Comparison.NotEquals)] private Worley worleyNoise;
-
-    private void Start()
-    {
-        rend = GetComponent<Renderer>();
-        ApplyAll();
-    }
-    private void Update()
-    {
-
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            ApplyAll();
-        }
-    }
-    private void TiledTexture(int res, Renderer rend)
-    {
-        Texture2D tex = new Texture2D(res, res);
-        int tiledRes = res * 3;
-        for (int x = 0; x < tiledRes; x++)
-        {
-
-            for (int y = 0; y < tiledRes; y++)
-            {
-                float val = Mathf.Lerp(0, 1, y / (float)tiledRes);
-                tex.SetPixel(x, y, new Color(val, val, val));
-            }
-        }
-        tex.Apply();
-        rend.material.mainTexture = tex;
-    }
-
-    private void ApplyAll()
-    {
-        switch (noiseType)
-        {
-            case NoiseType.Fbm:
-                fbm.DrawNoiseToTex(scale, rend);
-                break;
-            case NoiseType.Perlin:
-                perlinNoise.DrawNoiseToTex(scale, rend);
-                break;
-            case NoiseType.Worley:
-                worleyNoise.DrawNoiseToTex(scale, rend);
-                break;
-            case NoiseType.TestCase:
-                TiledTexture(scale, rend);
-                break;
-        }
-    }
-
-}
 
 public class UtilityComputation
 {
@@ -80,6 +17,9 @@ public class UtilityComputation
     public static float Fract(float val) => val - Mathf.Floor(val);
 }
 
+/// <summary>
+/// Fractal Brownian motion algorithm general script
+/// </summary>
 [System.Serializable]
 public class Fbm
 {
@@ -120,7 +60,6 @@ public class Fbm
         float amp = .5f;
         for (int i = 0; i < octaves; i++)
         {
-            //val += amp * Mathf.PerlinNoise(x * scale * (i * 2), y * scale * (i * 2));
             val += amp * Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(x * scale * (i * 2), y * scale * (i * 2)));
             amp *= .2f;
         }
@@ -134,7 +73,6 @@ public class Fbm
         for (int i = 0; i < octaves; i++)
         {
             val += amp * Mathf.PerlinNoise(x * scale * (i * 2), y * scale * (i * 2));
-            //val += amp * Unity.Mathematics.noise.cnoise(new Unity.Mathematics.float2(x * scale * (i * 2), y * scale * (i * 2)));
             amp *= .5f;
         }
         if (val < 0 || val > 1) Debug.Log("AA");
@@ -142,65 +80,3 @@ public class Fbm
     }
 
 }
-[System.Serializable]
-internal class PerlinNoise
-{
-    [SerializeField, Min(1)] private int upScaleNoise = 3;
-    public void DrawNoiseToTex(int res, Renderer rend)
-    {
-        Texture2D tex = new Texture2D(res, res);
-        for (int x = 0; x < res; x++)
-        {
-            for (int y = 0; y < res; y++)
-            {
-                float c = Mathf.PerlinNoise(x / (float)tex.width * upScaleNoise, y / (float)tex.height * upScaleNoise);
-                tex.SetPixel(x, y, new Color(c, c, c));
-            }
-        }
-        rend.material.mainTexture = tex;
-
-        tex.Apply();
-    }
-
-}
-// Technically same as Voronoi, not using it
-[System.Serializable]
-internal class Worley
-{
-    [SerializeField, Min(1)] private int pointsCount = 3;
-    [SerializeField, Min(1)] private int modifier = 3;
-    public void DrawNoiseToTex(int res, Renderer rend)
-    {
-        Texture2D tex = new Texture2D(res, res);
-        res /= modifier;
-        Vector2[] cellPos = new Vector2[pointsCount];
-        // Placing random points on the map
-        for (int i = 0; i < cellPos.Length; i++)
-        {
-            cellPos[i] = new Vector2(Random.Range(1, res) / (float)res, Random.Range(1, res) / (float)res);
-        }
-
-        for (int x = 0; x < res; x++)
-        {
-            // mapping position from 0 to 1
-            float xPos = x / (float)res;
-            for (int y = 0; y < res; y++)
-            {
-                float m_dist = 1;
-                // mapping position from 0 to 1
-                float yPos = y / (float)res;
-
-                for (int i = 0; i < cellPos.Length; i++)
-                {
-                    // measuring distance from coordinate to point
-                    float dist = Vector2.Distance(new Vector2(xPos, yPos), cellPos[i]);
-                    m_dist = Mathf.Min(m_dist, dist);
-                }
-                tex.SetPixel(x, y, new Color(m_dist, m_dist, m_dist));
-            }
-        }
-        tex.Apply();
-        rend.material.mainTexture = tex;
-    }
-}
-
